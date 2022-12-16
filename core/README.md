@@ -1,0 +1,4 @@
+# Faryadell Simulation Framework (SFS)
+Creator: Abolfazl Delavar - Web: http://abolfazldelavar.com
+
+Normally, this folder might not be practical to examine directly. In other words, this directory includes the main core of solvers and synamical runners that you only need to know call them, although their codes are available to modify. In default situation, there are some practical classes such as LTI runner, nonlinear runner of ODEs, and creating neural networks with neuron dynamical formulas. In addition, the 'lib' folder contains classes that carry some necessary functions that have been used in the framework structure.
