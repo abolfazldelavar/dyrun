@@ -24,7 +24,7 @@ def finalize(params, models, signals, lib, plotOrNot = True):
         #  Insert your graphical ideas here ...
 
         # Illustrate all plots
-        plt.show()
+        # plt.show()
         
     ## Finalize ans saving data
     #  If you want to save data, put your ideas into the below function
