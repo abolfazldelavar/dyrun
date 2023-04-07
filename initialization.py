@@ -117,10 +117,6 @@ class valuation():
         params.ip3_0                    = 0.820204
 
         # Neuron model
-        params.aa                       = 0.1  #FS #Time scale of the recovery variable
-        params.b                        = 0.2
-        params.c                        = -65
-        params.d                        = 2
         params.alf                      = 10        # s^-1    | Glutamate clearance constant
         params.k                        = 600  #600 # uM.s^-1 | Efficacy of glutamate release
         params.neuron_fired_thr         = 30        # Maxium amount of input current for presynaptic neurons
@@ -134,7 +130,6 @@ class valuation():
         params.gsyn                     = 0.05 #0.05 0.025 # Eta_syn # Default synaptic weight
         params.aep                      = 1.2  #0.5        # Astrocytic modulation (Vca)
         params.Esyn                     = 0                # presynaptic neuorn voltage
-        params.ksyn                     = 6    #0.2        # If you add noise reduce it to 5!!
         # for Ksyn  # without noise     = 6
                     # with noise        = 5
 
@@ -175,6 +170,8 @@ class vectors():
         signals.tLine = np.arange(0, params.tOut, params.step)
 
         # Put your signals here ...
+        signals.v = scope(signals.tLine, params.quantity_neurons)
+        signals.I = scope(signals.tLine, params.quantity_neurons)
         
     def set(signals, params):
         # Put your codes to change params here ...
@@ -190,6 +187,7 @@ class blocks():
         models.updated = True
         
         # Insert your blocks here ...
+        models.neurons = neuronGroup(Izhikevich(), params.quantity_neurons, params.step)
 
     def set(models, params, signals):
         # Put your codes to change params here ...

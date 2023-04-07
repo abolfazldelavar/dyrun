@@ -141,27 +141,36 @@ class neuronGroup():
         # the number of neurons, dynamic class, sample time, initial condition
         initialcondition = [0]
         timedelay        = 0
+        Pre              = 0
+        Post             = 0
         for key, val in kwargs.items():
             # 'initial' can set the initial condition
             if key == 'initial': initialcondition = val
             # 'delay' denotes the input delay
             if key == 'delay': timedelay = val
+            # 'Pre' denotes the pre numbers
+            if key == 'Pre': Pre = val
+            # 'Post' denotes the post numbers
+            if key == 'Post': Post = val
 
-        self.delay         = timedelay              # The input signals over the time
-        self.block         = inputsystem            # Get a copy of your system class
-        self.sampleTime    = sampletime             # The simulation sample-time
-        self.numberNeurons = nNeurons               # The number of neurons (Network size)
-        self.numStates     = self.block.numStates   # The number of states
-        self.numInputs     = self.block.numInputs   # The number of inputs
-        self.numOutputs    = self.block.numOutputs  # The number of measurements
-        self.solverType    = self.block.solverType  # The type of dynamic solver
-        self.currentStep   = 0                      # The current step of simulation
-        self.initialStates = self.block.initialStates
-        self.initialStates = np.reshape(self.initialStates, [np.size(self.initialStates), 1])
-        self.inputs        = np.zeros([self.numInputs,  self.numberNeurons, self.delay + 1])
-        self.outputs       = np.zeros([self.numOutputs, self.numberNeurons])
-        self.states        = np.ones([self.numStates,  self.numberNeurons])
-        self.states        = self.initialStates*self.states
+        self.delay          = timedelay              # The input signals over the time
+        self.Pre            = Pre                    # Pre
+        self.Post           = Post                   # Post
+        self.block          = inputsystem            # Get a copy of your system class
+        self.sampleTime     = sampletime             # The simulation sample-time
+        self.numberNeurons  = nNeurons               # The number of neurons (Network size)
+        self.numStates      = self.block.numStates   # The number of states
+        self.numInputs      = self.block.numInputs   # The number of inputs
+        self.numOutputs     = self.block.numOutputs  # The number of measurements
+        self.solverType     = self.block.solverType  # The type of dynamic solver
+        self.currentStep    = 0                      # The current step of simulation
+        self.initialStates  = self.block.initialStates
+        self.initialStates  = np.reshape(self.initialStates, [np.size(self.initialStates), 1])
+        self.synapseCurrent = np.zeros([self.numInputs,  self.numberNeurons])
+        self.inputs         = np.zeros([self.numInputs,  self.numberNeurons, self.delay + 1])
+        self.outputs        = np.zeros([self.numOutputs, self.numberNeurons])
+        self.states         = np.ones([self.numStates,  self.numberNeurons])
+        self.states         = self.initialStates*self.states
         
         # If the initial input does not exist, set it zero
         # Else, put the initial condition in the state matrix
@@ -181,7 +190,7 @@ class neuronGroup():
     # The 'nextstep' function can provide an easy way to call 
     # dydnamics of the system to calculate next sample states
     # To use this function, refer to the top INSTRUCTION part
-    def nextstep(self, u, xNoise = 0, yNoise = 0):
+    def nextstep(self, u, outInput = False, xNoise = 0, yNoise = 0):
         # this object, input at time t, additive noise on states, additive noise on output
         
         # Making delayed input signal
@@ -214,6 +223,10 @@ class neuronGroup():
         # The output of the system is solved by the measurement
         # dynamics of the system which are available in 'Izhikevich.m' file
         y = self.block.measurements(x, u)
+
+        # Inter connections and synapses' currents are calculated here
+        if outInput != False:
+            self.synapseCurrent = self.block.synapses(x, outInput, self.Pre, self.Post)
         
         # Updating internal signals
         self.states  = x + xNoise

@@ -39,6 +39,10 @@ class Izhikevich():
     b         = 0.2     # Sensitivity of the recovery variable to the sub-threshold fluctuations of the membrane potential
     c         = -65     # After-spike reset value of the membrane potential
     d         = 2       # After-spike reset value of the recovery variable
+    ksyn      = 6       #
+    aep       = 1.2     #
+    gsyn      = 0.05    #
+    Esyn      = 0       #
     timescale = 1e3     # is used to change ms to second
     
     ## This part is internal dynamic functions that represents
@@ -71,6 +75,20 @@ class Izhikevich():
             x[0,:] = np.minimum(x[0,:], 30)
         return x
     # The end of the function
+
+    ## Synapses between systems
+    #  To have an internal static interaction between agents
+    def synapses(self, x, outInput, Pre, Post):
+        # Obj, States, Output input, Pre, Post
+        # Neuron synaptic currents
+        Smoother = 1 / (1 + np.exp((-x[0,:] / self.ksyn)))
+        Isyn     = np.zeros((np.size(x,1), 1))
+        gsync    = self.gsyn + outInput[Post]*self.aep
+        Isync    = gsync * Smoother(Pre) * (self.Esyn - x[0, Post])
+        # Isyn
+        for i in range(0, np.size(Pre,1)):
+            Isyn[Post[i]] = Isyn[Post[i]] + Isync[i]
+        return Isyn
 # The end of the class
 
 

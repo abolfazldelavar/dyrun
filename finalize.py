@@ -22,6 +22,7 @@ def finalize(params, models, signals, lib, plotOrNot = True):
         
         ## Main part
         #  Insert your graphical ideas here ...
+        # signals.v.show(params, select=[0,2,5])
 
         # Illustrate all plots
         # plt.show()

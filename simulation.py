@@ -27,6 +27,8 @@ def simulation(params, models, signals, lib):
         trig = func.disit(k, params.n, trig, params)
 
         ## Write your codes here ...
+        models.neurons.nextstep(4 * np.random.randn(1, params.quantity_neurons) + 3)
+        signals.v.getdata(models.neurons.outputs)
 
     ## Finalize options
     # To report the simulation time after running has finished
