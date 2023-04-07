@@ -22,10 +22,11 @@ def finalize(params, models, signals, lib, plotOrNot = True):
         
         ## Main part
         #  Insert your graphical ideas here ...
-        # signals.v.show(params, select=[0,2,5])
-
+        signals.v.show(params, select=[0,2])
+        signals.G.show(params, select=[0,2])
+        
         # Illustrate all plots
-        # plt.show()
+        plt.show()
         
     ## Finalize ans saving data
     #  If you want to save data, put your ideas into the below function

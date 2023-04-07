@@ -35,15 +35,16 @@ class Izhikevich():
     initialStates = [-60, -12] # Initial value of states
     
     # Other variables
-    a         = 0.1     # Time scale of the recovery variable
-    b         = 0.2     # Sensitivity of the recovery variable to the sub-threshold fluctuations of the membrane potential
-    c         = -65     # After-spike reset value of the membrane potential
-    d         = 2       # After-spike reset value of the recovery variable
-    ksyn      = 6       #
-    aep       = 1.2     #
-    gsyn      = 0.05    #
-    Esyn      = 0       #
-    timescale = 1e3     # is used to change ms to second
+    a                = 0.1     # Time scale of the recovery variable
+    b                = 0.2     # Sensitivity of the recovery variable to the sub-threshold fluctuations of the membrane potential
+    c                = -65     # After-spike reset value of the membrane potential
+    d                = 2       # After-spike reset value of the recovery variable
+    ksyn             = 6       #
+    aep              = 1.2     #
+    gsyn             = 0.05    #
+    Esyn             = 0       #
+    timescale        = 1e3     # is used to change ms to second
+    neuron_fired_thr = 30      # Maxium amount of input current for presynaptic neurons
     
     ## This part is internal dynamic functions that represents
     #  internal relations between states and inputs
@@ -67,12 +68,12 @@ class Izhikevich():
         # Obj, States, Mode
         if mode == 0:
             # before updating states
-            ind    = (x[0,:] == 30)
+            ind    = (x[0,:] == self.neuron_fired_thr)
             x[0,:] = x[0,:]*(1 - ind) + ind*self.c
             x[1,:] = x[1,:] + ind*self.d
         elif mode == 1:
             # After updating states
-            x[0,:] = np.minimum(x[0,:], 30)
+            x[0,:] = np.minimum(x[0,:], self.neuron_fired_thr)
         return x
     # The end of the function
 

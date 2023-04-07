@@ -196,6 +196,7 @@ class neuronGroup():
         # Making delayed input signal
         self.inputs = np.roll(self.inputs, -1, axis=2)
         self.inputs[:,:,-1] = u
+        systemInput = self.inputs[:,:,0] + self.synapseCurrent
 
         # Set before-state-limitations:
         # This can be used if we want to process on states before
@@ -203,7 +204,7 @@ class neuronGroup():
         x = self.block.limitations(self.states, 0)
         
         # The below handle function is used in the following
-        handleDyn = lambda xx: self.block.dynamics(xx, self.inputs[:,:,0])
+        handleDyn   = lambda xx: self.block.dynamics(xx, systemInput)
         
         # This part calculates the states and outputs using the system dynamics
         if self.block.timeType == 'c':
@@ -225,7 +226,8 @@ class neuronGroup():
         y = self.block.measurements(x, u)
 
         # Inter connections and synapses' currents are calculated here
-        if outInput != False:
+        if self.Pre != 0 and self.Post != 0:
+            if outInput == False: outInput = self.inputs[:,:,-1]*0
             self.synapseCurrent = self.block.synapses(x, outInput, self.Pre, self.Post)
         
         # Updating internal signals

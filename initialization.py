@@ -119,19 +119,12 @@ class valuation():
         # Neuron model
         params.alf                      = 10        # s^-1    | Glutamate clearance constant
         params.k                        = 600  #600 # uM.s^-1 | Efficacy of glutamate release
-        params.neuron_fired_thr         = 30        # Maxium amount of input current for presynaptic neurons
-        params.I_input_thr              = 25   #25  # Maxium amount of voltage out of a neuron
 
         # Synaptic connections
         params.N_connections            = 20   #30  #40 #number of synapses per neurons 
         params.quantity_connections     = params.quantity_neurons * params.N_connections
         params.lambdagain               = 1    #2,5 #Average exponential distribution
         params.beta                     = 5
-        params.gsyn                     = 0.05 #0.05 0.025 # Eta_syn # Default synaptic weight
-        params.aep                      = 1.2  #0.5        # Astrocytic modulation (Vca)
-        params.Esyn                     = 0                # presynaptic neuorn voltage
-        # for Ksyn  # without noise     = 6
-                    # with noise        = 5
 
         # Astrosyte model
         params.dCa                      = 0.03
@@ -169,9 +162,12 @@ class vectors():
         # Simulation time vector
         signals.tLine = np.arange(0, params.tOut, params.step)
 
-        # Put your signals here ...
-        signals.v = scope(signals.tLine, params.quantity_neurons)
-        signals.I = scope(signals.tLine, params.quantity_neurons)
+        # Put your signals here ---------------------------------------------------
+        # Oscope signals
+        signals.v = scope(signals.tLine, params.quantity_neurons)  # Neuron output signal
+        signals.I = scope(signals.tLine, params.quantity_neurons)  # Neuron input signal
+        signals.G = scope(signals.tLine, params.quantity_neurons)  # Glutamate signal
+        # --------------------------------------------------------------------#END#
         
     def set(signals, params):
         # Put your codes to change params here ...
@@ -186,8 +182,12 @@ class blocks():
         # This function is created to support your systems
         models.updated = True
         
-        # Insert your blocks here ...
+        # Insert your blocks here -----------------------------------------------------
+        # Neuron network
         models.neurons = neuronGroup(Izhikevich(), params.quantity_neurons, params.step)
+        # Glutamate defused from presynaptic neuron to synaptic cleft
+        models.G = LTISystem(tf([params.k],[1, params.alf]), params.quantity_neurons, params.step)
+        # ------------------------------------------------------------------------#END#
 
     def set(models, params, signals):
         # Put your codes to change params here ...

@@ -26,9 +26,17 @@ def simulation(params, models, signals, lib):
         # Displaying the iteration number on the command window
         trig = func.disit(k, params.n, trig, params)
 
-        ## Write your codes here ...
-        models.neurons.nextstep(4 * np.random.randn(1, params.quantity_neurons) + 3)
+        ## Write your codes here ---------------------------------------------------
+
+        # Updating neuron network, and saving voltages
+        models.neurons.nextstep(4 * np.random.randn(1, params.quantity_neurons) + 4)
         signals.v.getdata(models.neurons.outputs)
+        
+        # obtaining Glutamate in neuronal network, and saving data
+        models.G.nextstep(models.neurons.outputs == models.neurons.block.neuron_fired_thr)
+        signals.G.getdata(models.G.outputs)
+
+        # --------------------------------------------------------------------------
 
     ## Finalize options
     # To report the simulation time after running has finished
