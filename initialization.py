@@ -111,7 +111,6 @@ class valuation():
         params.az                       = 2 # az - 1
 
         # Initial conditions
-        params.v_0                      = -70
         params.ca_0                     = 0.072495
         params.h_0                      = 0.886314
         params.ip3_0                    = 0.820204
@@ -121,10 +120,9 @@ class valuation():
         params.k                        = 600  #600 # uM.s^-1 | Efficacy of glutamate release
 
         # Synaptic connections
-        params.N_connections            = 20   #30  #40 #number of synapses per neurons 
+        params.N_connections            = 20   #number of synapses per neurons 
         params.quantity_connections     = params.quantity_neurons * params.N_connections
-        params.lambdagain               = 1    #2,5 #Average exponential distribution
-        params.beta                     = 5
+        params.lambdagain               = 1.5  #Average exponential distribution
 
         # Astrosyte model
         params.dCa                      = 0.03

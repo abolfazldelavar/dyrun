@@ -30,7 +30,7 @@ def simulation(params, models, signals, lib):
 
         # Updating neuron network, and saving voltages
         Sign = np.zeros((1, params.quantity_neurons))
-        Sign[0, 0:3] = 20
+        Sign[0, 0:10] = 15 + np.random.randn(10)
         signals.Isum.getdata(models.neurons.synapseCurrent + Sign)
         models.neurons.nextstep(Sign)
         signals.I.getdata(Sign)

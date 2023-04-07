@@ -22,13 +22,13 @@ def finalize(params, models, signals, lib, plotOrNot = True):
         
         ## Main part
         #  Insert your graphical ideas here ...
-        signals.v.show(params, select=[0, 6, 50], title='Voltage')
-        signals.G.show(params, select=[0, 6, 50], title='Glutamate')
-        signals.Isum.show(params, select=[0, 6, 50], title='$I_sum$')
-        signals.I.show(params, select=[0, 6, 50], title='$I_pattern$')
+        signals.v.show(params, select=[0, 6, 50], title='Voltage', legend=1)
+        signals.G.show(params, select=[0, 6, 50], title='Glutamate', legend=1)
+        signals.Isum.show(params, select=[0, 6, 50], title='$I_{sum}$', legend=1)
+        signals.I.show(params, select=[0, 6, 50], title='$I_{pattern}$', legend=1)
 
-        signals.v.raster(params, title='Voltage Raster')
-        signals.G.raster(params, title='Glutamate Raster')
+        signals.v.raster(params, title='Voltage Raster', ylabel='Neuron Index')
+        signals.G.raster(params, title='Glutamate Raster', ylabel='Neuron Index')
 
         # Illustrate all plots
         plt.show()

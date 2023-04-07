@@ -387,6 +387,6 @@ class scope():
         # Modify the Y ticks
         ax.set_yticks([0, imHeight], [str(select[0]), str(select[-1])])
         # Save the figure
-        plib.figureSaveCore(params, save=save, fig=h, dpi=500)
+        # plib.figureSaveCore(params, save=save, fig=h, dpi=500)
 # The end of the class
 
