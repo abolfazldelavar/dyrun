@@ -141,8 +141,8 @@ class neuronGroup():
         # the number of neurons, dynamic class, sample time, initial condition
         initialcondition = [0]
         timedelay        = 0
-        Pre              = 0
-        Post             = 0
+        Pre              = np.array(0)
+        Post             = np.array(0)
         for key, val in kwargs.items():
             # 'initial' can set the initial condition
             if key == 'initial': initialcondition = val
@@ -226,7 +226,7 @@ class neuronGroup():
         y = self.block.measurements(x, u)
 
         # Inter connections and synapses' currents are calculated here
-        if self.Pre != 0 and self.Post != 0:
+        if self.Pre.any() and self.Post.any():
             if outInput == False: outInput = self.inputs[:,:,-1]*0
             self.synapseCurrent = self.block.synapses(x, outInput, self.Pre, self.Post)
         

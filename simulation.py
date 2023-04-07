@@ -29,7 +29,11 @@ def simulation(params, models, signals, lib):
         ## Write your codes here ---------------------------------------------------
 
         # Updating neuron network, and saving voltages
-        models.neurons.nextstep(4 * np.random.randn(1, params.quantity_neurons) + 4)
+        Sign = np.zeros((1, params.quantity_neurons))
+        Sign[0, 0:3] = 20
+        signals.Isum.getdata(models.neurons.synapseCurrent + Sign)
+        models.neurons.nextstep(Sign)
+        signals.I.getdata(Sign)
         signals.v.getdata(models.neurons.outputs)
         
         # obtaining Glutamate in neuronal network, and saving data

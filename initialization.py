@@ -166,6 +166,7 @@ class vectors():
         # Oscope signals
         signals.v = scope(signals.tLine, params.quantity_neurons)  # Neuron output signal
         signals.I = scope(signals.tLine, params.quantity_neurons)  # Neuron input signal
+        signals.Isum = scope(signals.tLine, params.quantity_neurons)  # Neuron input signal
         signals.G = scope(signals.tLine, params.quantity_neurons)  # Glutamate signal
         # --------------------------------------------------------------------#END#
         
@@ -183,8 +184,10 @@ class blocks():
         models.updated = True
         
         # Insert your blocks here -----------------------------------------------------
-        # Neuron network
+        # Neuron network, and synapses
         models.neurons = neuronGroup(Izhikevich(), params.quantity_neurons, params.step)
+        models.neurons.Pre, models.neurons.Post = lib.mfun.createConnections(params)
+
         # Glutamate defused from presynaptic neuron to synaptic cleft
         models.G = LTISystem(tf([params.k],[1, params.alf]), params.quantity_neurons, params.step)
         # ------------------------------------------------------------------------#END#

@@ -83,12 +83,11 @@ class Izhikevich():
         # Obj, States, Output input, Pre, Post
         # Neuron synaptic currents
         Smoother = 1 / (1 + np.exp((-x[0,:] / self.ksyn)))
-        Isyn     = np.zeros((np.size(x,1), 1))
-        gsync    = self.gsyn + outInput[Post]*self.aep
-        Isync    = gsync * Smoother(Pre) * (self.Esyn - x[0, Post])
-        # Isyn
-        for i in range(0, np.size(Pre,1)):
-            Isyn[Post[i]] = Isyn[Post[i]] + Isync[i]
+        Isyn     = np.zeros((1, np.size(x,1)))
+        gsync    = self.gsyn + outInput[:, Post]*self.aep
+        Isync    = gsync * Smoother[Pre] * (self.Esyn - x[0, Post])
+        for i in range(0, np.size(Pre)):
+            Isyn[0, Post[i]] = Isyn[0, Post[i]] + Isync[0, i]
         return Isyn
 # The end of the class
 

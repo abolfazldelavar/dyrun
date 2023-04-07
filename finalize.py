@@ -22,9 +22,14 @@ def finalize(params, models, signals, lib, plotOrNot = True):
         
         ## Main part
         #  Insert your graphical ideas here ...
-        signals.v.show(params, select=[0,2])
-        signals.G.show(params, select=[0,2])
-        
+        signals.v.show(params, select=[0, 6, 50], title='Voltage')
+        signals.G.show(params, select=[0, 6, 50], title='Glutamate')
+        signals.Isum.show(params, select=[0, 6, 50], title='$I_sum$')
+        signals.I.show(params, select=[0, 6, 50], title='$I_pattern$')
+
+        signals.v.raster(params, title='Voltage Raster')
+        signals.G.raster(params, title='Glutamate Raster')
+
         # Illustrate all plots
         plt.show()
         
