@@ -375,6 +375,9 @@ class scope():
         ax.set_ylabel(ylabel)
         if title != False: ax.set_title(title)
 
+        # Change the appearance to LaTeX form
+        plib.isi(params, h, save=save)
+
         # Color Bar
         if switcher2 == 1:
             barTICK = [vmin, vmax]
@@ -385,8 +388,6 @@ class scope():
         # Modify the Y ticks
         ax.set_yticks([0, imHeight], [str(select[0]), str(select[-1])])
 
-        # Change the appearance to LaTeX form
-        plib.isi(params, h, save=save)
         # Save the figure
         # plib.figureSaveCore(params, save=save, fig=h, dpi=500)
 # The end of the class
