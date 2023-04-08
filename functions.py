@@ -7,6 +7,7 @@
 
 # Loading requirements
 from core.lib.pyRequirment import *
+from cv2 import imread, cvtColor, COLOR_BGR2GRAY
 
 class ownLib():
     # Here you can put your functions. To use, call them using 'lib.mfun'.
@@ -15,6 +16,7 @@ class ownLib():
         print('Hello world')
         return args
     
+    # Synapses moedel which is obtained from an exponential distribution
     def createConnections(self, params):
         # 3D connection of neurons and synaptic connections
         Post         = np.zeros((params.mneuro, params.nneuro, params.N_connections), dtype=np.int16)
@@ -56,4 +58,103 @@ class ownLib():
         return [Pre_line.flatten(), Post_line.flatten()]
     # the end of the function
 
+    ## Loading and preparing images ---------------------------------------------
+    def load_images(self, params):
+        images = np.zeros((params.mneuro, params.nneuro, len(params.image_names)))
+        i = 0
+        for name in params.image_names:
+            image = imread(params.images_dir + '/' + name)
+            image = cvtColor(image, COLOR_BGR2GRAY) # rgb2gray(image)
+            images[:,:,i] = image
+            i += 1
+        return images
+
+    def make_experiment(self, images, params):
+        num_images = len(images)
+        # Images are affected by noise and prepared
+        if hasattr(params, 'learn_order'):
+            learn_order = params.learn_order
+        else:
+            learn_order = self.make_image_order(num_images, 10, True)
+        learn_signals = self.make_noise_signals(images, \
+                                                learn_order, \
+                                                params.mneuro, \
+                                                params.nneuro, \
+                                                params.variance_learn, \
+                                                params.Iapp_learn)
+        if hasattr(params, 'test_order'):
+            test_order = params.test_order
+        else:
+            test_order = self.make_image_order(num_images, 1, True)
+        test_signals = self.make_noise_signals(images, \
+                                               test_order, \
+                                               params.mneuro, \
+                                               params.nneuro, \
+                                               params.variance_test, \
+                                               params.Iapp_test)
+        I_signals = np.concatenate((learn_signals, test_signals), axis=2)
+        I_signals = np.uint8(I_signals)
+
+        # Make image signals
+        learn_timeline = self.make_timeline(params.learn_start_time, \
+                                            params.learn_impulse_duration, \
+                                            params.learn_impulse_shift, \
+                                            len(learn_order))
+        test_timeline  = self.make_timeline(params.test_start_time, \
+                                            params.test_impulse_duration, \
+                                            params.test_impulse_shift, \
+                                            len(test_order))
+        
+        full_timeline = np.concatenate((learn_timeline, test_timeline), axis=0)
+        full_timeline = np.int0(full_timeline / params.step)
+        full_timeline = np.uint16(full_timeline)
+        
+        timeline_signal_id = np.zeros((params.n), dtype=np.int8)
+        timeline_signal_id_movie = np.zeros((params.n), dtype=np.int8)
+        
+        for i in range(0, I_signals.shape[2]):
+            be = full_timeline[i, 0]
+            en = full_timeline[i, 1]
+            # For simulation
+            timeline_signal_id[be : en] = i
+            # For video
+            be = be - params.before_sample_frames
+            en = en + params.after_sample_frames
+            timeline_signal_id_movie[be : en] = i
+        return [I_signals, full_timeline, timeline_signal_id, timeline_signal_id_movie]
+    
+    def make_image_order(self, num_images, num_repetitions, need_shuffle):
+        image_order = np.zeros((num_images * num_repetitions), dtype=np.int8)
+        for id_image in range(0, num_images):
+            image_order[(id_image*num_repetitions):((id_image+1)*num_repetitions)] = id_image
+        if need_shuffle:
+            image_order = image_order(np.random.permutation(num_images*num_repetitions))
+        return image_order
+    
+    def make_noise_signals(self, images, order, height, width, variance, Iapp0):
+        signals = np.zeros((height, width, len(order)))
+        for i in range(0, len(order)):
+            image_id         = order[i]
+            signal           = self.make_noise_signal(images[:,:,image_id], height, width, variance, Iapp0)
+            signals[:, :, i] = signal
+        return signals
+    
+    def make_noise_signal(self, image, height, width, variance, Iapp0, thr=127):
+        image = image[0 : height, 0 : width] < thr
+        # rng('shuffle')
+        p = np.random.permutation(width*height)
+        b = p[0 : np.uint16(width * height * variance)]
+        image[b] = ~image[b]
+        image = np.double(image) * Iapp0
+        return image
+
+    def make_timeline(self, start, duration, step, num_samples):
+        timeline = np.zeros((num_samples, 2))
+        for i in range(0, num_samples):
+            be             = start + step*i
+            en             = be + duration
+            timeline[i, :] = [be, en]
+        return timeline
+
+    ## Loading and preparing images ---------------------------------------------
 # The end of the class

@@ -69,16 +69,29 @@ class valuation():
         params.defaultImageFormat = 'png' #(string)
         
         #### Your code ------------------------------------------------------
+        # Load Images options
+        params.images_dir = params.loadPath + '/images - patterns/Experiment 1 - words'
+        params.image_names = [
+            'A.jpg',        \
+            'mid_B.jpg',    \
+            'P.jpg',        \
+            'mid_L.jpg',    \
+            'J.jpg',        \
+            'I.jpg',        \
+            'E.jpg',        \
+            'G.jpg'         \
+        ]
+
         # Experiment
         params.learn_start_time         = 0.2
         params.learn_impulse_duration   = 0.21
         params.learn_impulse_shift      = 0.41
-        params.learn_order              = np.array([0, 1, 2, 3]) + 1
+        params.learn_order              = np.array([0, 1, 2, 3])
         
         params.test_start_time          = 2.3
         params.test_impulse_duration    = 0.13 # 0.15
         params.test_impulse_shift       = 0.42 # 0.4
-        params.test_order               = np.array([0, 4, 1, 5, 2, 6, 3, 7]) + 1
+        params.test_order               = np.array([0, 4, 1, 5, 2, 6, 3, 7])
         
         # Applied pattern current
         params.variance_learn           = 0     # 0.05
@@ -161,6 +174,11 @@ class vectors():
         signals.tLine = np.arange(0, params.tOut, params.step)
 
         # Put your signals here ---------------------------------------------------
+        #  Prepare images
+        signals.images = lib.mfun.load_images(params)
+        signals.Iapp, signals.T_Iapp, signals.T_Iapp_met, \
+            signals.T_record_met = lib.mfun.make_experiment(signals.images, params)
+
         # Oscope signals
         signals.v = scope(signals.tLine, params.quantity_neurons)  # Neuron output signal
         signals.I = scope(signals.tLine, params.quantity_neurons)  # Neuron input signal
