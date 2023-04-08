@@ -22,14 +22,14 @@ def finalize(params, models, signals, lib, plotOrNot = True):
         
         ## Main part
         #  Insert your graphical ideas here ...
-        signals.v.show(params, select=[0, 6, 50], title='Voltage', legend=1)
-        signals.G.show(params, select=[0, 6, 50], title='Glutamate', legend=1)
-        signals.Isum.show(params, select=[0, 6, 50], title='$I_{sum}$', legend=1)
-        signals.ca.show(params, select=[0, 1, 3, 4, 5, 10], title='Ca', legend=1)
+        signals.v.show(params, select=[0, 6, 50], title='Voltage', legend=1, save='Voltage.png')
+        signals.G.show(params, select=[0, 6, 50], title='Glutamate', legend=1, save='Glutamate.png')
+        signals.Isum.show(params, select=[0, 6, 50], title='$I_{sum}$', legend=1, save='Isum.png')
+        signals.ca.show(params, select=[0, 1, 3, 4, 5, 10], title='Ca', legend=1, save='Calcium.png')
 
-        signals.v.raster(params, title='Voltage Raster', ylabel='Neuron Index')
-        signals.G.raster(params, title='Glutamate Raster', ylabel='Neuron Index')
-        signals.ca.raster(params, title='Calcium Raster', ylabel='Astrocyte Index')
+        signals.v.raster(params, title='Voltage Raster', ylabel='Neuron Index', save='VoltageRaster.png')
+        signals.G.raster(params, title='Glutamate Raster', ylabel='Neuron Index', save='GlutamateRaster.png')
+        signals.ca.raster(params, title='Calcium Raster', ylabel='Astrocyte Index', save='CalciumRaster.png')
         # Illustrate all plots
         plt.show()
         
