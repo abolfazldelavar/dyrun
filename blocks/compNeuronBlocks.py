@@ -49,17 +49,18 @@ class Izhikevich():
     ## This part is internal dynamic functions that represents
     #  internal relations between states and inputs
     #  ~~> dx = f(x,u)
-    def dynamics(self, x, I):
-        # Parameters, states, inputs
+    def dynamics(self, x, I, iInter):
+        # Parameters, states, inputs, Internal synapses current
+        Isum = I + iInter
         dx      = np.zeros([2, x.shape[1]])
-        dx[0,:] = self.timescale*(0.04*np.power(x[0,:],2) + 5*x[0,:] - x[1,:] + 140 + I)
+        dx[0,:] = self.timescale*(0.04*np.power(x[0,:],2) + 5*x[0,:] - x[1,:] + 140 + Isum)
         dx[1,:] = self.timescale*(self.a*(self.b*x[0,:] - x[1,:]))
         return dx
     
     ## Measurement functions 
     #  ~~> y = g(x,u)
-    def measurements(self, x, I):
-        # Parameters, states, inputs
+    def measurements(self, x, I, iInter):
+        # Parameters, states, inputs, Internal synapses current
         return x[0,:]
     
     ## All limitations before and after the state updating

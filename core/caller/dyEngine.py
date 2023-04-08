@@ -196,7 +196,7 @@ class neuronGroup():
         # Making delayed input signal
         self.inputs = np.roll(self.inputs, -1, axis=2)
         self.inputs[:,:,-1] = u
-        systemInput = self.inputs[:,:,0] + self.synapseCurrent
+        systemInput = self.inputs[:,:,0]
 
         # Set before-state-limitations:
         # This can be used if we want to process on states before
@@ -204,7 +204,7 @@ class neuronGroup():
         x = self.block.limitations(self.states, 0)
         
         # The below handle function is used in the following
-        handleDyn   = lambda xx: self.block.dynamics(xx, systemInput)
+        handleDyn   = lambda xx: self.block.dynamics(xx, systemInput, self.synapseCurrent)
         
         # This part calculates the states and outputs using the system dynamics
         if self.block.timeType == 'c':
@@ -223,7 +223,7 @@ class neuronGroup():
         
         # The output of the system is solved by the measurement
         # dynamics of the system which are available in 'Izhikevich.m' file
-        y = self.block.measurements(x, u)
+        y = self.block.measurements(x, u, self.solverType)
 
         # Inter connections and synapses' currents are calculated here
         if self.Pre.any() and self.Post.any():

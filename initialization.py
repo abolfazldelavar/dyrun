@@ -120,6 +120,7 @@ class valuation():
         params.quantity_neurons         = params.mneuro * params.nneuro
         params.mastro                   = 5
         params.nastro                   = 5
+        params.quantity_astrocytes      = params.mastro * params.nastro
         # az                              = 4          # Astrosyte zone size
         params.az                       = 2 # az - 1
 
@@ -136,10 +137,6 @@ class valuation():
         params.N_connections            = 20   #number of synapses per neurons 
         params.quantity_connections     = params.quantity_neurons * params.N_connections
         params.lambdagain               = 1.5  #Average exponential distribution
-
-        # Astrosyte model
-        params.dCa                      = 0.03
-        params.dIP3                     = 0.03 #0.05
         
         params.enter_astro              = 3    #F_astro # F_recall
         params.min_neurons_activity     = 3    #F_act   # F_memorize
@@ -203,6 +200,8 @@ class blocks():
         # Neuron network, and synapses
         models.neurons = neuronGroup(Izhikevich(), params.quantity_neurons, params.step)
         models.neurons.Pre, models.neurons.Post = lib.mfun.createConnections(params)
+
+        models.neurons = neuronGroup(Izhikevich(), params.quantity_astrocytes, params.step)
 
         # Glutamate defused from presynaptic neuron to synaptic cleft
         models.G = LTISystem(tf([params.k],[1, params.alf]), params.quantity_neurons, params.step)
