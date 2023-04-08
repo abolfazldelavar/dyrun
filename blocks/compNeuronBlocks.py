@@ -82,7 +82,7 @@ class Izhikevich():
     ## Synapses between systems
     #  To have an internal static interaction between agents
     def synapses(self, x, outInput, Pre, Post):
-        # Obj, States, Output input, Pre, Post
+        # Obj, States, Foreign input, Pre, Post
         # Neuron synaptic currents
         Smoother = 1 / (1 + np.exp((-x[0,:] / self.ksyn)))
         Isyn     = np.zeros((1, np.size(x,1)))
@@ -119,7 +119,7 @@ class Ullah():
     numOutputs    = 1          # The number of outputs
     numSynapses   = 2          # The number of synapses signals (diffusions: Ca and IP3)
     timeType      = 'c'        # 'c' -> Continuous, 'd' -> Discrete
-    solverType    = 'Runge'    # 'Euler', 'Runge'
+    solverType    = 'Euler'    # 'Euler', 'Runge'
     ca_0          = 0.072495
     h_0           = 0.886314
     ip3_0         = 0.820204
@@ -190,7 +190,7 @@ class Ullah():
     ## Synapses between systems
     #  To have an internal static interaction between agents
     def synapses(self, x, outInput, Pre, Post):
-        # Obj, States, Output input, Pre, Post
+        # Obj, States, Foreign input, Pre, Post
         # Astrocytes synaptic currents
         Deff     = np.zeros((2, np.size(x,1)))
         for i in range(0, np.size(Pre)):

@@ -58,12 +58,11 @@ class ownLib():
 
     # Astrocyte synapses moedel
     def createAstrocytesConnections(self, params):
-        # 3D connection of astrocytes
+        # Connection of astrocytes
         # Each agent is connected to its closest neighbours (4 sides)
         Post_line = np.zeros((params.quantity_astrocytes*4), dtype=np.int16)
         Pre_line  = np.zeros((params.quantity_astrocytes*4), dtype=np.int16)
         n = 0
-
         for i in range(0, params.mastro):
             for j in range(0, params.nastro):
                 if (i == 0 and j == 0):                                 # Corner top left
@@ -150,7 +149,7 @@ class ownLib():
         i = 0
         for name in params.image_names:
             image = imread(params.images_dir + '/' + name)
-            image = cvtColor(image, COLOR_BGR2GRAY) # rgb2gray(image)
+            image = cvtColor(image, COLOR_BGR2GRAY)
             images[:,:,i] = image
             i += 1
         return images
@@ -242,5 +241,5 @@ class ownLib():
             timeline[i, :] = [be, en]
         return timeline
 
-    ## Loading and preparing images ---------------------------------------------
+    ## Loading and preparing images (END) ---------------------------------------
 # The end of the class

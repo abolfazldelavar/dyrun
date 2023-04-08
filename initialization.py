@@ -110,23 +110,19 @@ class valuation():
         params.poisson_impulse_initphase = int(1.5 / params.step)
         params.poisson_amplitude         = 20
 
-        # Runge-Kutta steps
-        params.u2                       = params.step / 2
-        params.u6                       = params.step / 6
-
         # Network size
-        params.mneuro                   = 10 # (mneuro = mastro * 3 + 1 (for az = 4))
+        # (mneuro = mastro * 3 + 1 (for az = 4))
+        params.mneuro                   = 10
         params.nneuro                   = 10
         params.quantity_neurons         = params.mneuro * params.nneuro
         params.mastro                   = 5
         params.nastro                   = 5
         params.quantity_astrocytes      = params.mastro * params.nastro
-        # az                              = 4          # Astrosyte zone size
-        params.az                       = 2 # az - 1
+        params.az                       = 2
 
         # Neuron model
-        params.alf                      = 10        # s^-1    | Glutamate clearance constant
-        params.k                        = 600  #600 # uM.s^-1 | Efficacy of glutamate release
+        params.alf                      = 10   # s^-1    | Glutamate clearance constant
+        params.k                        = 600  # uM.s^-1 | Efficacy of glutamate release
 
         # Synaptic connections
         params.N_connections            = 20   #number of synapses per neurons 
@@ -146,9 +142,6 @@ class valuation():
         params.impact_astro             = int(impact_astro / params.step)
         params.window_astro_watch       = int(window_astro_watch / params.step)
         params.shift_window_astro_watch = int(shift_window_astro_watch / params.step)
-        
-        # Memory performance
-        params.max_spikes_thr           = 30
         
         #### Your code ------------------------------------------------ #END#
 
