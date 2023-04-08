@@ -130,7 +130,7 @@ class valuation():
         params.lambdagain               = 1.5  #Average exponential distribution
         
         params.enter_astro              = 3    #F_astro # F_recall
-        params.min_neurons_activity     = 3    #F_act   # F_memorize
+        params.F_memorize               = 0.6   #F_act   # F_memorize
         params.t_neuro                  = 0.06          # Astrocyte effect duration (second)
         params.amplitude_neuro          = 5             # Astrocyte input
         params.threshold_Ca             = 0.3  #0.15    # calcium should be higher than this to have WM

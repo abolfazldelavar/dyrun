@@ -201,11 +201,11 @@ class ownLib():
             be = full_timeline[i, 0]
             en = full_timeline[i, 1]
             # For simulation
-            timeline_signal_id[be : en] = i
+            timeline_signal_id[be : en] = i + 1
             # For video
             be = be - params.before_sample_frames
             en = en + params.after_sample_frames
-            timeline_signal_id_movie[be : en] = i
+            timeline_signal_id_movie[be : en] = i + 1
         return [I_signals, full_timeline, timeline_signal_id, timeline_signal_id_movie]
     
     def make_image_order(self, num_images, num_repetitions, need_shuffle):
@@ -240,6 +240,32 @@ class ownLib():
             en             = be + duration
             timeline[i, :] = [be, en]
         return timeline
-
     ## Loading and preparing images (END) ---------------------------------------
+
+    # Neuron to astro function
+    def neuron2astrocyte(self, params, G, maskLine):
+        mask = np.reshape(maskLine, (params.nneuro, params.mneuro)).T
+        mask = np.single(mask)
+        
+        # Detects any neuron that passes the glutamate threshold
+        glutamate_above_thr = np.reshape(G, (params.nneuro, params.mneuro)).T
+        
+        neuron_astrozone_activity = np.zeros((params.mastro, params.nastro))
+        neuron_astrozone_spikes   = np.zeros((params.mastro, params.nastro), dtype=np.int8)
+        
+        sj = int(0)
+        for j in range(0, params.mneuro, params.az):
+            sk = int(0)
+            for k in range(0, params.nneuro, params.az):
+                # The number of neurons that passed the glu threshold
+                neuron_astrozone_activity[j - sj, k - sk] = \
+                    np.sum(glutamate_above_thr[j:(j+1), k:(k+1)])
+                # Number of neurons spiking
+                neuron_astrozone_spikes[j - sj, k - sk] = \
+                    np.sum(mask[j : j + 1, k : k + 1])
+                sk = int((k + 2)/2)
+            sj = int((j + 2)/2)
+        return neuron_astrozone_activity.T.flatten(), neuron_astrozone_spikes.T.flatten()
+
+
 # The end of the class

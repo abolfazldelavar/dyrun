@@ -34,24 +34,28 @@ def simulation(params, models, signals, lib):
             Iapp = np.zeros((params.mneuro, params.nneuro), dtype=np.uint8)
         else:
             # for the timeline of applied input
-            Iapp = signals.Iapp[:, :, signals.T_Iapp_met[k]] 
+            Iapp = signals.Iapp[:, :, signals.T_Iapp_met[k]-1]
         pattInputCurrent = np.double(Iapp.T.flatten())
         # Keeping Isum
         signals.Isum.getdata(models.neurons.synapseCurrent + pattInputCurrent)
         # Updating neurons
         models.neurons.nextstep(pattInputCurrent)
+        vMask = models.neurons.outputs == models.neurons.block.neuron_fired_thr
         # Keeping voltage time series
         signals.v.getdata(models.neurons.outputs)
         # obtaining Glutamate in neuronal network
-        models.G.nextstep(models.neurons.outputs == models.neurons.block.neuron_fired_thr)
+        models.G.nextstep(vMask)
         # Keeping Glutamate signal 
         signals.G.getdata(models.G.outputs)
 
         # *** NEURON TO ASTROCYTE PART
-
+        neuron_astrozone_activity, neuron_astrozone_spikes = \
+            lib.mfun.neuron2astrocyte(params, models.G.outputs, vMask)
+        
         # *** ASTROCYTE PART
-        astroInput = np.zeros((1, params.quantity_astrocytes))
-        astroInput[0, 0:3] = 3
+        # Preparing inputs
+        astroInput = neuron_astrozone_activity * \
+            np.double(neuron_astrozone_activity >= params.F_memorize)
         # Updating astrocyte network
         models.astrocytes.nextstep(astroInput)
         # Saving Calcium time series
