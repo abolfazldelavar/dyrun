@@ -16,16 +16,14 @@ class ownLib():
         print('Hello world')
         return args
     
-    # Synapses moedel which is obtained from an exponential distribution
-    def createConnections(self, params):
+    # Neuron synapses moedel which is obtained from an exponential distribution
+    def createNeuronsConnections(self, params):
         # 3D connection of neurons and synaptic connections
         Post         = np.zeros((params.mneuro, params.nneuro, params.N_connections), dtype=np.int16)
         ties_stock   = 2000 * params.N_connections
         
         for i in range(0, params.mneuro):
-            for j in range(0, params.nneuro):
-                # [samples] = fast_weighted_sampling(weights, m)
-                
+            for j in range(0, params.nneuro):              
                 XY      = np.zeros((2, ties_stock), dtype=np.int8)
                 R       = np.random.exponential(scale=params.lambdagain, size=ties_stock)
                 fi      = 2 * np.pi * np.random.rand(1, ties_stock)
@@ -57,6 +55,94 @@ class ownLib():
             k = k + 1
         return [Pre_line.flatten(), Post_line.flatten()]
     # the end of the function
+
+    # Astrocyte synapses moedel
+    def createAstrocytesConnections(self, params):
+        # 3D connection of astrocytes
+        # Each agent is connected to its closest neighbours (4 sides)
+        Post_line = np.zeros((params.quantity_astrocytes*4), dtype=np.int16)
+        Pre_line  = np.zeros((params.quantity_astrocytes*4), dtype=np.int16)
+        n = 0
+
+        for i in range(0, params.mastro):
+            for j in range(0, params.nastro):
+                if (i == 0 and j == 0):                                 # Corner top left
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j + 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i + 1)
+                    n += 2
+                elif (i == params.mastro-1) and (j == params.nastro-1): # Corner bottom right
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i - 1)
+                    n += 2
+                elif (i == 0) and (j == params.nastro-1):               # Corner top right
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i + 1)
+                    n += 2
+                elif (i == params.mastro-1) and (j == 0):               # Corner bottom left
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j + 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i - 1)
+                    n += 2
+                elif i == 0:                                            # First top row
+                    Pre_line[n:(n+3)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = (j + 1)*params.mastro + i
+                    Post_line[n+2]    = j*params.mastro + (i + 1)
+                    n += 3
+                elif i == params.mastro-1:                              # Last bottom row
+                    Pre_line[n:(n+3)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = (j + 1)*params.mastro + i
+                    Post_line[n+2]    = j*params.mastro + (i - 1)
+                    n += 3
+                elif j == 0:                                            # First left column
+                    Pre_line[n:(n+3)] = j*params.mastro + i
+                    Post_line[n]      = (j + 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i - 1)
+                    Post_line[n+2]    = j*params.mastro + (i + 1)
+                    n += 3
+                elif j == params.nastro-1:                              # Last right column
+                    Pre_line[n:(n+3)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i - 1)
+                    Post_line[n+2]    = j*params.mastro + (i + 1)
+                    n += 3
+                elif (i == 0 and j == 0):                               # Corner top left
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j + 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i + 1)
+                    n += 2
+                elif (i == params.mastro-1) and (j == params.nastro-1): # Corner bottom right
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i - 1)
+                    n += 2
+                elif (i == 0) and (j == params.nastro-1):               # Corner top right
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i + 1)
+                    n += 2
+                elif (i == params.mastro-1) and (j == 0):               # Corner bottom left
+                    Pre_line[n:(n+2)] = j*params.mastro + i
+                    Post_line[n]      = (j + 1)*params.mastro + i
+                    Post_line[n+1]    = j*params.mastro + (i - 1)
+                    n += 2
+                elif (i > 0) and (i < params.mastro-1) and (j > 0) and (j < params.nastro-1): # Middle nodes
+                    Pre_line[n:(n+4)] = j*params.mastro + i
+                    Post_line[n]      = (j - 1)*params.mastro + i
+                    Post_line[n+1]    = (j + 1)*params.mastro + i
+                    Post_line[n+2]    = j*params.mastro + (i - 1)
+                    Post_line[n+3]    = j*params.mastro + (i + 1)
+                    n += 4
+        # End for
+        Pre_line  = Pre_line[0:n]
+        Post_line = Post_line[0:n]
+        return [Pre_line.flatten(), Post_line.flatten()]
+    # the end of the function
+
 
     ## Loading and preparing images ---------------------------------------------
     def load_images(self, params):

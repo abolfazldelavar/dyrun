@@ -162,11 +162,12 @@ class neuronGroup():
         self.numStates      = self.block.numStates   # The number of states
         self.numInputs      = self.block.numInputs   # The number of inputs
         self.numOutputs     = self.block.numOutputs  # The number of measurements
+        self.numSynapses    = self.block.numSynapses # The figure for synapses
         self.solverType     = self.block.solverType  # The type of dynamic solver
         self.currentStep    = 0                      # The current step of simulation
         self.initialStates  = self.block.initialStates
         self.initialStates  = np.reshape(self.initialStates, [np.size(self.initialStates), 1])
-        self.synapseCurrent = np.zeros([self.numInputs,  self.numberNeurons])
+        self.synapseCurrent = np.zeros([self.numSynapses, self.numberNeurons])
         self.inputs         = np.zeros([self.numInputs,  self.numberNeurons, self.delay + 1])
         self.outputs        = np.zeros([self.numOutputs, self.numberNeurons])
         self.states         = np.ones([self.numStates,  self.numberNeurons])

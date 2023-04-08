@@ -25,11 +25,11 @@ def finalize(params, models, signals, lib, plotOrNot = True):
         signals.v.show(params, select=[0, 6, 50], title='Voltage', legend=1)
         signals.G.show(params, select=[0, 6, 50], title='Glutamate', legend=1)
         signals.Isum.show(params, select=[0, 6, 50], title='$I_{sum}$', legend=1)
-        signals.I.show(params, select=[0, 6, 50], title='$I_{pattern}$', legend=1)
+        signals.ca.show(params, select=[0, 1, 3, 4, 5, 10], title='Ca', legend=1)
 
         signals.v.raster(params, title='Voltage Raster', ylabel='Neuron Index')
         signals.G.raster(params, title='Glutamate Raster', ylabel='Neuron Index')
-
+        signals.ca.raster(params, title='Calcium Raster', ylabel='Astrocyte Index')
         # Illustrate all plots
         plt.show()
         

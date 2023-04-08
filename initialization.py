@@ -124,11 +124,6 @@ class valuation():
         # az                              = 4          # Astrosyte zone size
         params.az                       = 2 # az - 1
 
-        # Initial conditions
-        params.ca_0                     = 0.072495
-        params.h_0                      = 0.886314
-        params.ip3_0                    = 0.820204
-
         # Neuron model
         params.alf                      = 10        # s^-1    | Glutamate clearance constant
         params.k                        = 600  #600 # uM.s^-1 | Efficacy of glutamate release
@@ -177,10 +172,10 @@ class vectors():
             signals.T_record_met = lib.mfun.make_experiment(signals.images, params)
 
         # Oscope signals
-        signals.v = scope(signals.tLine, params.quantity_neurons)  # Neuron output signal
-        signals.I = scope(signals.tLine, params.quantity_neurons)  # Neuron input signal
+        signals.v    = scope(signals.tLine, params.quantity_neurons)  # Neuron output signal
+        signals.ca   = scope(signals.tLine, params.quantity_astrocytes)  # Astrocyte Calcium
         signals.Isum = scope(signals.tLine, params.quantity_neurons)  # Neuron input signal
-        signals.G = scope(signals.tLine, params.quantity_neurons)  # Glutamate signal
+        signals.G    = scope(signals.tLine, params.quantity_neurons)  # Glutamate signal
         # --------------------------------------------------------------------#END#
         
     def set(signals, params):
@@ -199,9 +194,11 @@ class blocks():
         # Insert your blocks here -----------------------------------------------------
         # Neuron network, and synapses
         models.neurons = neuronGroup(Izhikevich(), params.quantity_neurons, params.step)
-        models.neurons.Pre, models.neurons.Post = lib.mfun.createConnections(params)
+        models.neurons.Pre, models.neurons.Post = lib.mfun.createNeuronsConnections(params)
 
-        models.neurons = neuronGroup(Izhikevich(), params.quantity_astrocytes, params.step)
+        # Astrocyte network, and synapses
+        models.astrocytes = neuronGroup(Ullah(), params.quantity_astrocytes, params.step)
+        models.astrocytes.Pre, models.astrocytes.Post = lib.mfun.createAstrocytesConnections(params)
 
         # Glutamate defused from presynaptic neuron to synaptic cleft
         models.G = LTISystem(tf([params.k],[1, params.alf]), params.quantity_neurons, params.step)
