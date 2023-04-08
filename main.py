@@ -2,8 +2,8 @@
 ## // --------------------------------------------------------------
 #    ***FARYADELL SIMULATION FRAMEWORK***
 #    Creator:   Abolfazl Delavar
-#    Web:       http://abolfazldelavar.com
-#    Updated:   20 November 2022
+#    Web:       https://github.com/abolfazldelavar
+#    Updated:   8 April 2023
 #               2750 code lines
 #
 #    Description: This package has provided to simulate easily and quickly

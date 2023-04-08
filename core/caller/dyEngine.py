@@ -2,7 +2,7 @@
 ## // --------------------------------------------------------------
 #    ***FARYADELL SIMULATION FRAMEWORK***
 #    Creator:   Abolfazl Delavar
-#    Web:       http://abolfazldelavar.com
+#    Web:       https://github.com/abolfazldelavar
 ## // --------------------------------------------------------------
 
 # Import initial classes
@@ -12,7 +12,7 @@ from core.caller.scopeEngine import scope
 
 class LTISystem():
     ## --------------------------------------------------------------------------------
-    # Author: A. Delavar, http://abolfazldelavar.com
+    # Author: A. Delavar, https://github.com/abolfazldelavar
     #  --------------------------------------------------------------------------
     # INSTRUCTION
     # 1) Define your LTI system using 'tf', 'zpk', 'ss', ...

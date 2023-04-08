@@ -2,7 +2,7 @@
 ## // --------------------------------------------------------------
 #    ***FARYADELL SIMULATION FRAMEWORK***
 #    Creator:   Abolfazl Delavar
-#    Web:       http://abolfazldelavar.com
+#    Web:       https://github.com/abolfazldelavar
 ## // --------------------------------------------------------------
 
 # Import necessary classes
