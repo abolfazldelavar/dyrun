@@ -28,37 +28,6 @@ def simulation(params, models, signals, lib):
 
         ## Write your codes here ---------------------------------------------------
 
-        # *** NEURON PART
-        # Preparing input current to apply to the network
-        if signals.T_Iapp_met[k] == 0:
-            Iapp = np.zeros((params.mneuro, params.nneuro), dtype=np.uint8)
-        else:
-            # for the timeline of applied input
-            Iapp = signals.Iapp[:, :, signals.T_Iapp_met[k]] 
-        pattInputCurrent = np.double(Iapp.T.flatten())
-        # Keeping Isum
-        signals.Isum.getdata(models.neurons.synapseCurrent + pattInputCurrent)
-        # Updating neurons
-        models.neurons.nextstep(pattInputCurrent)
-        # Keeping voltage time series
-        signals.v.getdata(models.neurons.outputs)
-        # obtaining Glutamate in neuronal network
-        models.G.nextstep(models.neurons.outputs == models.neurons.block.neuron_fired_thr)
-        # Keeping Glutamate signal 
-        signals.G.getdata(models.G.outputs)
-
-        # *** NEURON TO ASTROCYTE PART
-
-        # *** ASTROCYTE PART
-        astroInput = np.zeros((1, params.quantity_astrocytes))
-        astroInput[0, 0:3] = 3
-        # Updating astrocyte network
-        models.astrocytes.nextstep(astroInput)
-        # Saving Calcium time series
-        signals.ca.getdata(models.astrocytes.outputs)
-
-        # *** ASTROCYTE TO NEURON PART
-
         # --------------------------------------------------------------------------
 
     ## Finalize options

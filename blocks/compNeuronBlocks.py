@@ -94,7 +94,6 @@ class Izhikevich():
 # The end of the class
 
 
-
 class Ullah():
     # Nonlinear Dynamic
     # --------------------------------------------------------------------------
