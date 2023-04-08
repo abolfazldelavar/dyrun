@@ -48,8 +48,8 @@ class ownLib():
                     if n >= params.N_connections: break
         # End for
 
-        Post2 = Post.transpose(2,1,0)
-        Post_line = Post2.flatten()
+        Post2 = Post.transpose(2,0,1)
+        Post_line = Post2.T.flatten()
         Pre_line = np.zeros(np.size(Post_line), dtype=np.int16)
         k = 0
         for i in range(0, np.size(Post_line), params.N_connections):
