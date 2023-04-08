@@ -2,7 +2,7 @@
 ## // --------------------------------------------------------------
 #    ***FARYADELL SIMULATION FRAMEWORK***
 #    Creator:   Abolfazl Delavar
-#    Web:       http://abolfazldelavar.com
+#    Web:       https://github.com/abolfazldelavar
 ## // --------------------------------------------------------------
 
 # Import initial classes
@@ -12,7 +12,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 class scope():
     ## --------------------------------------------------------------------------------
-    # Author: A. Delavar, http://abolfazldelavar.com
+    # Author: A. Delavar, https://github.com/abolfazldelavar
     #  --------------------------------------------------------------------------
     # This class is a kind of scope that can save your signals which can be
     # used for after running progress.
