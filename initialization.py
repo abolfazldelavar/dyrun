@@ -163,12 +163,12 @@ class vectors():
         signals.images = lib.mfun.load_images(params)
         signals.Iapp, signals.T_Iapp, signals.T_Iapp_met, \
             signals.T_record_met = lib.mfun.make_experiment(signals.images, params)
+        
+        signals.neuronsPre, signals.neuronsPost       = lib.mfun.createNeuronsConnections(params)
+        signals.astrocytesPre, signals.astrocytesPost = lib.mfun.createAstrocytesConnections(params)
 
         # Oscope signals
-        signals.v    = scope(signals.tLine, params.quantity_neurons)  # Neuron output signal
-        signals.ca   = scope(signals.tLine, params.quantity_astrocytes)  # Astrocyte Calcium
-        signals.Isum = scope(signals.tLine, params.quantity_neurons)  # Neuron input signal
-        signals.G    = scope(signals.tLine, params.quantity_neurons)  # Glutamate signal
+        
         # --------------------------------------------------------------------#END#
         
     def set(signals, params):
@@ -185,16 +185,7 @@ class blocks():
         models.updated = True
         
         # Insert your blocks here -----------------------------------------------------
-        # Neuron network, and synapses
-        models.neurons = neuronGroup(Izhikevich(), params.quantity_neurons, params.step)
-        models.neurons.Pre, models.neurons.Post = lib.mfun.createNeuronsConnections(params)
 
-        # Astrocyte network, and synapses
-        models.astrocytes = neuronGroup(Ullah(), params.quantity_astrocytes, params.step)
-        models.astrocytes.Pre, models.astrocytes.Post = lib.mfun.createAstrocytesConnections(params)
-
-        # Glutamate defused from presynaptic neuron to synaptic cleft
-        models.G = LTISystem(tf([params.k],[1, params.alf]), params.quantity_neurons, params.step)
         # ------------------------------------------------------------------------#END#
 
     def set(models, params, signals):

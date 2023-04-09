@@ -7,6 +7,7 @@
 
 # Import necessary classes
 from core.lib.pyRequirment import *
+from core.caller.scopeEngine import *
 
 def simulation(params, models, signals, lib):
     # [Parameters, Models, Signals, Libraries] <- (Parameters, Models, Signals, Libraries)
@@ -21,53 +22,47 @@ def simulation(params, models, signals, lib):
     # A trigger used to report steps in command
     trig = [st, params.commandIntervalSpan, -1]
     
-    ## Main loop
-    for k in range(0, params.n):
-        # Displaying the iteration number on the command window
-        trig = func.disit(k, params.n, trig, params)
+    # Optimization ------------------------------------------------
+    # -------------------------------------------------------------
+    a = 0.1
+    b = 0.2
+    c = -65
+    d = 2
+    aep = 1.2
+    gsyn = 0.05
+    Esyn = 0
+    ksyn = 6
+    Iapp = 0
+    eqs = '''
+        dv/dt = (0.04*(v**2) + 5*v - u + 140 + Iapp + Isyn)/ms : 1
+        du/dt = (a*(b*v - u))/ms : 1
+        Isyn : 1
+    '''
+    reset = '''
+        v  = c
+        u += d
+    '''
+    G = NeuronGroup(params.quantity_neurons, eqs, threshold='v>30', reset=reset, method='euler')
+    G.v[:] = -60
+    G.u[:] = -12
+    G.Isyn = 0
 
-        ## Write your codes here ---------------------------------------------------
+    synPrep = '''
+        Smoother  = 1 / (1 + exp((-v_pre / ksyn)))
+        Isyn_post = gsyn * Smoother * (Esyn - v_post)
+    '''
+    S = Synapses(G, G, on_pre=synPrep)
+    S.connect(i=signals.neuronsPre, j=signals.neuronsPost)
 
-        # *** NEURON PART
-        # Preparing input current to apply to the network
-        if signals.T_Iapp_met[k] == 0:
-            Iapp = np.zeros((params.mneuro, params.nneuro), dtype=np.uint8)
-        else:
-            # for the timeline of applied input
-            Iapp = signals.Iapp[:, :, signals.T_Iapp_met[k]-1]
-        pattInputCurrent = np.double(Iapp.T.flatten())
-        # Keeping Isum
-        signals.Isum.getdata(models.neurons.synapseCurrent + pattInputCurrent)
-        # Updating neurons
-        models.neurons.nextstep(pattInputCurrent)
-        vMask = models.neurons.outputs == models.neurons.block.neuron_fired_thr
-        # Keeping voltage time series
-        signals.v.getdata(models.neurons.outputs)
-        # obtaining Glutamate in neuronal network
-        models.G.nextstep(vMask)
-        # Keeping Glutamate signal 
-        signals.G.getdata(models.G.outputs)
+    M = StateMonitor(G, 'v', record=True)
+    run(params.tOut*second)
 
-        # *** NEURON TO ASTROCYTE PART
-        neuron_astrozone_activity, neuron_astrozone_spikes = \
-            lib.mfun.neuron2astrocyte(params, models.G.outputs, vMask)
-        
-        # *** ASTROCYTE PART
-        # Preparing inputs
-        astroInput = neuron_astrozone_activity * \
-            np.double(neuron_astrozone_activity >= params.F_memorize)
-        # Updating astrocyte network
-        models.astrocytes.nextstep(astroInput)
-        # Saving Calcium time series
-        signals.ca.getdata(models.astrocytes.outputs)
+    signals.v = scope(signals.tLine, params.quantity_neurons, initial=M.v)  # Neuron output signal
 
-        # *** ASTROCYTE TO NEURON PART
-
-        # --------------------------------------------------------------------------
+    # -------------------------------------------------------------
 
     ## Finalize options
     # To report the simulation time after running has finished
-    func.disit(k, params.n, [st, 0, trig[2]], params)
     func.sayEnd(st, params)
     # Sent to output
     return [params, signals, models]

@@ -49,7 +49,7 @@ def main(extopt = 0):
 
 # Runnng the main function of this framework
 params, signals, models = main()
-print("Everything has gone right.")
+print("Everything has done right.")
 
 # External control the main function
 # If you need an external loop, Copy this piece of code after all orders

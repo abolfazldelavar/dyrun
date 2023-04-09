@@ -1,4 +1,5 @@
 # import requirments ---------------------------
+from brian2 import *
 import math as math
 import numpy as np
 import pandas as pd
