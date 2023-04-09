@@ -70,7 +70,7 @@ class valuation():
         
         #### Your code ------------------------------------------------------
         # Load Images options
-        params.images_dir = params.loadPath + '/images - patterns/Experiment 1 - words'
+        params.images_dir = params.loadPath + '/images - patterns/Experiment 1 - chars 10'
         params.image_names = [
             'A.jpg',        \
             'mid_B.jpg',    \
