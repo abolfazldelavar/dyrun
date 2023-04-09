@@ -24,6 +24,17 @@ def simulation(params, models, signals, lib):
     
     # Optimization ------------------------------------------------
     # -------------------------------------------------------------
+
+    pattInputCurrent = np.zeros((params.quantity_neurons, params.n))
+    for k in range(0, params.n):
+        # Preparing input current to apply to the network
+        if signals.T_Iapp_met[k] == 0:
+            Iapp = np.zeros((params.mneuro, params.nneuro), dtype=np.uint8)
+        else:
+            # for the timeline of applied input
+            Iapp = signals.Iapp[:, :, signals.T_Iapp_met[k]-1]
+        pattInputCurrent[:, k] = np.double(Iapp.T.flatten())
+    pattInputCurrent[0:10, 0:10000] = 10
     a = 0.1
     b = 0.2
     c = -65
@@ -32,9 +43,12 @@ def simulation(params, models, signals, lib):
     gsyn = 0.05
     Esyn = 0
     ksyn = 6
-    Iapp = 0
+
+    stimulus = TimedArray(pattInputCurrent, dt=100*ms)
+    # stimulus = TimedArray(np.hstack([[c, c, c, 0, 0] for c in np.random.rand(100)*10]), dt=400*ms)
+    
     eqs = '''
-        dv/dt = (0.04*(v**2) + 5*v - u + 140 + Iapp + Isyn)/ms : 1
+        dv/dt = (0.04*(v**2) + 5*v - u + 140 + stimulus(t,i) + Isyn)/ms : 1
         du/dt = (a*(b*v - u))/ms : 1
         Isyn : 1
     '''
@@ -48,8 +62,8 @@ def simulation(params, models, signals, lib):
     G.Isyn = 0
 
     synPrep = '''
-        Smoother  = 1 / (1 + exp((-v_pre / ksyn)))
-        Isyn_post = gsyn * Smoother * (Esyn - v_post)
+        Smoother  = 1/(1 + exp(-v_pre/ksyn))
+        Isyn_post = gsyn*Smoother*(Esyn - v_post)
     '''
     S = Synapses(G, G, on_pre=synPrep)
     S.connect(i=signals.neuronsPre, j=signals.neuronsPost)
