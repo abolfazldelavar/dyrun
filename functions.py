@@ -247,7 +247,6 @@ class ownLib():
         mask = np.reshape(maskLine, (params.nneuro, params.mneuro)).T
         mask = np.single(mask)
         
-        # Detects any neuron that passes the glutamate threshold
         glutamate_above_thr = np.reshape(G, (params.nneuro, params.mneuro)).T
         
         neuron_astrozone_activity = np.zeros((params.mastro, params.nastro))
@@ -259,10 +258,10 @@ class ownLib():
             for k in range(0, params.nneuro, params.az):
                 # The number of neurons that passed the glu threshold
                 neuron_astrozone_activity[j - sj, k - sk] = \
-                    np.sum(glutamate_above_thr[j:(j+1), k:(k+1)])
+                    np.sum(glutamate_above_thr[j:(j+2), k:(k+2)])
                 # Number of neurons spiking
                 neuron_astrozone_spikes[j - sj, k - sk] = \
-                    np.sum(mask[j : j + 1, k : k + 1])
+                    np.sum(mask[j:(j+2), k:(k+2)])
                 sk = int((k + 2)/2)
             sj = int((j + 2)/2)
         return neuron_astrozone_activity.T.flatten(), neuron_astrozone_spikes.T.flatten()
