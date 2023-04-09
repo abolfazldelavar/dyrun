@@ -191,9 +191,13 @@ class Ullah():
     def synapses(self, x, outInput, Pre, Post):
         # Obj, States, Foreign input, Pre, Post
         # Astrocytes synaptic currents
-        Deff     = np.zeros((2, np.size(x,1)))
-        for i in range(0, np.size(Pre)):
-            Deff[:, Pre[i]] = Deff[:, Pre[i]] + x[[0,2], Post[i]] - x[[0,2], Pre[i]]
+        qua_astr = np.size(x,1)
+        Deff     = np.zeros((2, qua_astr))
+        for i in range(0, qua_astr):
+            p = Pre == i
+            Deff[:, i] = np.add.reduce(x[[0,2],:][:, Post[p]], axis=1) - np.add.reduce(p)*x[[0,2], i]
+        # for i in range(0, np.size(Pre)):  # The above code is much faster than this
+        #     Deff[:, Pre[i]] = Deff[:, Pre[i]] + x[[0,2], Post[i]] - x[[0,2], Pre[i]]
         return Deff
 # The end of the class
 

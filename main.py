@@ -15,6 +15,10 @@
 #    "Successful people are those who can build solid foundations
 #     with the bricks others throw at them."
 #
+#     Run the below codes to observe the script timing.
+#       'python -m cProfile -o data\outputs\profiler\cprofiler.prof main.py'
+#       'snakeviz data\outputs\profiler\cprofiler.prof'
+#
 # \\ ---------------------------------------------------------------
 
 # Loading requirements
