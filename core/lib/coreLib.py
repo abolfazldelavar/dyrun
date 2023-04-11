@@ -18,13 +18,13 @@ class functionLib():
         # Trig: [Started time, Trigger, Previous k]
         nowt = time() - trig[0]
         if int(nowt) >= trig[1]:
-            trig[1] = trig[1] + params.commandIntervalSpan   # To make a horizon
-            mea     = k - trig[2]                            # Calculatation of the mean
+            trig[1] = trig[1] + params['commandIntervalSpan']   # To make a horizon
+            mea     = k - trig[2]                               # Calculatation of the mean
             trig[2] = k
-            trem    = (n - k)*params.commandIntervalSpan/mea # Remained time in second
-            tremmin = min(int(trem/60),1e5)                  # How minutes
-            tremsec = round(trem%60)                         # Remained seconds
-            comPerc = round(k/n*100)                         # Completed percentage
+            trem    = (n - k)*params['commandIntervalSpan']/mea # Remained time in second
+            tremmin = min(int(trem/60),1e5)                     # How minutes
+            tremsec = round(trem%60)                            # Remained seconds
+            comPerc = round(k/n*100)                            # Completed percentage
             
             # Making a graphical text
             txt     = ''
@@ -48,8 +48,8 @@ class functionLib():
             # Releasing the provided text
             print(txt)
             # Starting to append command context into the diary file
-            if params.makeDiary == True:
-                with open(params.diaryDir + '/' + params.diaryFile + '.txt', 'a', encoding='utf-8') as f:
+            if params['makeDiary'] == True:
+                with open(params['diaryDir'] + '/' + params['diaryFile'] + '.txt', 'a', encoding='utf-8') as f:
                     f.write('\n' + txt)
         # Sending data for the next step
         return trig
@@ -68,9 +68,9 @@ class functionLib():
         fullTx = '\n'.join(txt)
         print(fullTx)
         # Check the directory and start a diary to save command window
-        if params.makeDiary == True:
-            if not os.path.isdir(params.diaryDir): os.makedirs(params.diaryDir)
-            with open(params.diaryDir + '/' + params.diaryFile + '.txt', 'a', encoding='utf-8') as f:
+        if params['makeDiary'] == True:
+            if not os.path.isdir(params['diaryDir']): os.makedirs(params['diaryDir'])
+            with open(params['diaryDir'] + '/' + params['diaryFile'] + '.txt', 'a', encoding='utf-8') as f:
                 f.write(fullTx)
         # Send the current time to the output
         return time()
@@ -91,8 +91,8 @@ class functionLib():
         fullTx  = '\n'.join(txt)
         print(fullTx)
         # Starting to append command context into the diary file
-        if params.makeDiary == True:
-            with open(params.diaryDir + '/' + params.diaryFile + '.txt', 'a', encoding='utf-8') as f:
+        if params['makeDiary'] == True:
+            with open(params['diaryDir'] + '/' + params['diaryFile'] + '.txt', 'a', encoding='utf-8') as f:
                 f.write('\n' + fullTx)
 
     ## Returning a text contained date and time
@@ -185,7 +185,7 @@ class functionLib():
         return (Ss - Sf)*np.exp(-Sr*tLine) + Sf
     
     # Saturation a signal in a band area [band(1), band(2)]
-    def satutation(self, u, band):
+    def saturation(self, u, band):
         if u > band[1]:
             return band[1]
         elif u < band[0]:
@@ -345,9 +345,9 @@ class plotToolLib():
         # Loading requirements
         func       = functionLib()
         # To get current PC time to use as a prefix in the name of file
-        savePath   = params.savePath + '/figs'
+        savePath   = params['savePath'] + '/figs'
         # Default saving format
-        fFormat    = params.defaultImageFormat
+        fFormat    = params['defaultImageFormat']
         AllFormats = ['jpg', 'png', 'pdf']
         isSetDirec = False
         needToSetUniqAgain = True
@@ -399,7 +399,7 @@ class plotToolLib():
         save     = str(save)
         
         # Changing the file name 
-        if params.uniqueSave == 1 and needToSetUniqAgain:
+        if params['uniqueSave'] == 1 and needToSetUniqAgain:
             fName = save + '_' + func.getNow()
         else:
             fName = save
