@@ -7,25 +7,26 @@
 
 # Import initial classes
 from core.lib.pyRequirment import *
-from core.lib.coreLib  import plotToolLib
+from core.lib.coreLib  import plib
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 class scope():
-    ## --------------------------------------------------------------------------------
-    # Author: A. Delavar, https://github.com/abolfazldelavar
-    #  --------------------------------------------------------------------------
-    # This class is a kind of scope that can save your signals which can be
-    # used for after running progress.
-    # INSTRUCTION:
     # 1) Use the below code in 'initialization.py', into the 'vectors', to set initial options
     #    signals.x = scope(signals.tLine, The number of signals, initial=1)
     # 2) Use the below piece of code in 'simulation.py' to save each step
     #    signals.x.getdata(Input signal at step k, noise=0)
-    # ---------------------------------------------------------------------------------
     
     def __init__(self, tLine, nSignals, **kwargs):
-        # Time line, The number of signals, initial signal value
+        '''
+        This class is a kind of scope that can save your signals, and can be used for after running purposes.
 
+        Input variables:
+        * Time line
+        * Number of signals
+        
+        Options:
+        * `initial` denotes the initial condition of the estimator
+        '''
         initialcondition = np.array([0])
         # Extracting the arbitraty value of properties
         for key, val in kwargs.items():
@@ -55,9 +56,17 @@ class scope():
                 raise ValueError("The dimensional of initial value that inserted is wrong. Check it please.")
 
         
-    # The 'getdata' function can receive value and save it.
-    # To use this function, refer to the top INSTRUCTION part
-    def getdata(self, insData, **kwargs):
+    # The 'save' function can receive value and save it.
+    def save(self, insData, **kwargs):
+        '''
+        To saving data given step-by-step.
+
+        Input variables:
+        * Getting data at step `k`
+
+        Options:
+        * `noise` is used to add a noise as the measurement noise
+        '''
         # Inserted data, additive noise Variance
         
         addNoiseVar = 0
@@ -65,6 +74,7 @@ class scope():
         for key, val in kwargs.items():
             # The noise variance
             if key == 'noise': addNoiseVar = val
+
         # If the noise signals do not exist, consider them zero.
         noiseSig = np.random.normal(0, addNoiseVar, [self.numSignals, 1])
         
@@ -75,16 +85,48 @@ class scope():
         
     # This function can make a jump in the step number variable
     # If no arguments are available, jump 1 step
-    def goahead(self, i = 1):
+    def jump(self, i = 1):
+        '''
+        This function can make a jump in the step number variable.
+
+        Input variables:
+        * how many steps you would like me to jump?; default is `1`
+        '''
         self.currentStep += i
         
     # Reset Block by changing the current step to zero
     def reset(self):
+        '''
+        Reseting the block via changing the current step to zero.
+        '''
         self.currentStep = 0
 
     # The below function is used to plot the internal signals
     def show(self, params, **kwargs):
+        '''
+        This function makes a quick plot of internal signals.
 
+        input variables:
+        * `params`
+
+        Options:
+            * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
+            * `derive` is used to get derivatives of signals, which can be used in different forms:
+                * `derive=False` or `derive=True`; default is `False`,
+                * `derive=[1,1,0]` is used to get derivatives of selected signals. Ones you want to get derivative must be `1` or `True`.
+            * `notime` is used to remove time and illustrate timeless plots. it can be set differently:
+                * `notime=[0,1]` or `notime=[0,1,2]` is utilized to depict signals 2D or 3D. Note that the numbers are signal indices,
+                * `notime=[[0,1], [1,2]]` or `notime=[[0,1,2], [3,0,1]]` is utilized to depict different signal groups 2D or 3D. Note that the numbers are signal indices.
+            * `save` denotes to the name of the file which the plot will be saved with. it could be `image.png/pdf/jpg` or `True`.
+            * `xlabel`, `ylabel`, and `zlabel` are the x, y, and z title of the illustration.
+            * `title` cannotes the title of the figure.
+            * `legend' is used for legend issue:
+                * `legent=True` and `legent=False`, enables and disables the legent,
+                * `legent='title'` enables the legend with imported title.
+            * `lineWidth` can set the line width.
+            * `grid` can enables the grid of the illustration - `True` or `False`.
+            * `legCol` can control the column number of the legend and must be a positive integer.
+        '''
         # Get the input arguments
         select = -1
         derive = [[0]]
@@ -124,10 +166,6 @@ class scope():
             if key == 'grid': grid  = val
             # The number of legend columns
             if key == 'legCol': ncol = val
-
-        
-        # Initialize
-        plib = plotToolLib()
 
         # Extracting the arbitraty values of properties
         if select == -1: select = range(0, self.numSignals)
@@ -275,12 +313,28 @@ class scope():
 
     # The below function is used to plot a raster plot
     def raster(self, params, **kwargs):
-        # To set your opyions you must use the below codes:
-        #  'select'     -> 1:3
-        #  'ylabel'     -> 'Voltage (v)'
-        #  'colorLimit' -> [0, 1]
-        #  'gradient'   -> Gradient variable that made by gradient func.
-        
+        '''
+        To depict a raster plot of internal signals.
+
+        input variables:
+        * `params`
+
+        Options:
+            * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
+            * `derive` is used to get derivatives of signals, which can be used in different forms:
+                * `derive=False` or `derive=True`; default is `False`,
+                * `derive=[1,1,0]` is used to get derivatives of selected signals. Ones you want to get derivative must be `1` or `True`.
+            * `save` denotes to the name of the file which the plot will be saved with. it could be `image.png/pdf/jpg` or `True`.
+            * `xlabel` and `ylabel` are the x and y titles of the illustration.
+            * `title` cannotes the title of the figure.
+            * `colorBar` is a boolean input (`True` or `False`) that can enable or disable the color bar.
+            * `colorLimit` can restrict the color bar values; e.g., `[0, 1]`.
+            * `barTicks` are used to change the ticks of the color bar.
+            * `cmap` can be set to alter the colors arbitrarily. Use `plib.linGradient()` or `plib.cmapMaker()` to make one, or use pre-made ones like `mpl.cm.RdGy` and 'mpl.cm.RdYlGn'.
+            * `hwRatio` denotes height to width ratio and is valued between 0 and 1; default is `0.68`
+            * `interpolation` is blurization and can be set with `none`, `nearest`, `bilinear`, or `bicubic`.
+            * `rasterized` is a boolean value (`True` or `False`) which can change vector graph elements into images that can redue the file size significantly.
+        '''
         # Get the input arguments
         select = np.arange(0, self.numSignals)
         derive = False
@@ -338,10 +392,7 @@ class scope():
             PANELL[:,0]  = PANELL[:,1]
             PANELL[:,-1] = PANELL[:,-2]
 
-        ## Plot part
-        # Initialize
-        plib = plotToolLib()
-        
+        ## Plot part        
         #  Starting to create and plot
         h  = plt.figure(tight_layout=True)
         ax = h.subplots()
@@ -358,8 +409,8 @@ class scope():
                 origin = 'lower',       # This can reverse the Y axis
                 extent = [0, imWidth, 0, imHeight],
                 vmax   = vmax,          # The maximum value
-                vmin   = vmin,
-                rasterized = rasterize) # The mimimum value
+                vmin   = vmin,          # The mimimum value
+                rasterized = rasterize)
 
         axins = inset_axes(
             ax,
@@ -387,8 +438,6 @@ class scope():
             h.colorbar(im, cax=axins, ticks=barTICK)
         # Modify the Y ticks
         ax.set_yticks([0, imHeight], [str(select[0]), str(select[-1])])
-
-        # Save the figure
-        # plib.figureSaveCore(params, save=save, fig=h, dpi=500)
+        
 # The end of the class
 

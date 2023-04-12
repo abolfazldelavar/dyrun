@@ -8,13 +8,14 @@
 # Loading the requirements
 from core.lib.pyRequirment import *
 
-class functionLib():
+class clib():
     # Default functions, neccessary and essential functions that have been
     # provided to be used in projects. To use, you can call 'lib.func' in
     # anywhere you need.
 
     # The below function print a comment periodically
-    def disit(self, k, n, trig, params):
+    @staticmethod
+    def disit(k, n, trig, params):
         # Trig: [Started time, Trigger, Previous k]
         nowt = time() - trig[0]
         if int(nowt) >= trig[1]:
@@ -55,12 +56,13 @@ class functionLib():
         return trig
 
     # Saying a hello at the start of the simulation
-    def sayStart(self, params):
+    @staticmethod
+    def sayStart(params):
         # [Start time] <- (Parameters)
         # Print the header
         txt = list(['', '', '', '', '', ''])
         txt[1] = 'Faryadell Simulation Framework (FSF) - Version 1.0.0'
-        txt[2] = 'The simulation has kicked off! (' + self.getNow(5,'/') + ', ' + self.getNow(6,':') + ')'
+        txt[2] = 'The simulation has kicked off! (' + clib.getNow(5,'/') + ', ' + clib.getNow(6,':') + ')'
         # Below codes make the header table
         txt[3] = '-'*79
         txt[4] = '  Current step    |  All steps       |  Progress (%)    |  Remained time (m:s) '
@@ -76,7 +78,8 @@ class functionLib():
         return time()
 
     # Report the simulation time when it finishes
-    def sayEnd(self, starttime, params):
+    @staticmethod
+    def sayEnd(starttime, params):
         # Stopping the timer which started before, and saving the time.
         ntime   = time() - starttime
         tmin    = min(int(ntime/60), 1e5) # How minutes
@@ -96,9 +99,25 @@ class functionLib():
                 f.write('\n' + fullTx)
 
     ## Returning a text contained date and time
-    def getNow(self, typeReport = 0, splitchar = '_'):
-        # [Output string] <- (Internal, They output style controller, Splitter)
+    @staticmethod
+    def getNow(typeReport = 0, splitchar = '_'):
+        '''
+        To make a delay in a descrete function is used.
         
+        Input variables:
+            * The type of report
+                * default: `YMDHMS`
+                * 1: `YMD_HMS`
+                * 2: `Y_M_D_H_M_S`
+                * 3: `YMD_HM`
+                * 4: `YMD_HM`
+                * 5: `Y_M_D`
+                * 6: `H_M_S`
+            * Splitter; like `_` or `*`
+            
+        Output variable:
+            * Output string
+        '''        
         fullDate = datetime.now() # Getting full information of time
         year     = str(fullDate.year)
         month    = str(fullDate.month)
@@ -135,8 +154,19 @@ class functionLib():
 
         
     ## Delayed in a signal
-    def delayed(self, u, k, pdelay):
-        # [y] <- (Self, Signal, Current sample time, Delay number)
+    @staticmethod
+    def delayed(u, k, pdelay):
+        '''
+        To make a delay in a descrete function is used.
+        
+        Input variables:
+            * Full signal
+            * Current point `k`
+            * Delay amount (in integer)
+            
+        Output variable:
+            * delayed value
+        '''
         if k - pdelay >= 0:
             y = u[:, k - pdelay]
         else:
@@ -144,7 +174,8 @@ class functionLib():
         return y
 
     ## Signal Generator
-    def signalMaker(self, params, tLine):
+    @staticmethod
+    def signalMaker(params, tLine):
         # SETUP -------------------------------------------------------------------------
         # 1) Insert the below code in 'setParameters.m' to use signal generator:
         #        ## Signal Generator parameters
@@ -170,31 +201,57 @@ class functionLib():
 
            
     ## Making a signal of an exponential inverse
-    def expInverse(self, tLine, bias, alph, areaa):
-        # [Output signal] <- (Time line, The bias point, smoother, Signal domain)
+    @staticmethod
+    def expInverse(tLine, bias, alph, areaa):
+        '''
+        Sigmoid generator function.
+
+        Input variables:
+        * Time line
+        * Time delay bias
+        * Smoother
+        * Domain in form of [a, b]
+        
+        Output variable:
+        * The output signal
+        '''
         # Note that signal domain is a two component vector [a(1), a(2)]
         output = 1/(1 + np.exp(-alph*(tLine - bias)))
         return (areaa[1] - areaa[0])*output + areaa[0]
     
     ## Making an exponential signal
-    def exponensh(self, tLine, para):
-        # [Output signal] <- (Time line, [Startpoint, Final point, Rate])
+    @staticmethod
+    def exponensh(tLine, Sr, para):
+        '''
+        Exposential function.
+
+        Input variables:
+        * Time line
+        * Smoother
+        * Domain in form of [a, b]
+        
+        Output variable:
+        * The output signal
+        '''
         Ss = para(1);        # Start point
         Sf = para(2);        # Final value
-        Sr = para(3);        # Rate of unction
         return (Ss - Sf)*np.exp(-Sr*tLine) + Sf
-    
-    # Saturation a signal in a band area [band(1), band(2)]
-    def saturation(self, u, band):
-        if u > band[1]:
-            return band[1]
-        elif u < band[0]:
-            return band[0]
-        else:
-            return u
 
+    
     ## Linear mapping a number
-    def lineMap(self, x, fro, to):
+    @staticmethod
+    def lineMap(x, fro, to):
+        '''
+        Linear Mapping the point (or array) `x` from `[a1, b1]` domain to `y` in domain `[a2, b2]`
+
+        Input variables:
+        * array
+        * `x` domain: `[a1, b1]`
+        * `y` domain: `[a2, b2]`
+        
+        Output variable:
+        * The output array
+        '''
         # Map 'x' from band [w1, v1] to band [w2, v2]
         w1        = np.array(fro[0])
         v1        = np.array(fro[1])
@@ -206,18 +263,29 @@ class functionLib():
         return output
 # The end of the class
 
-
 class solverCore():
     # Dynamic Solver: This funtion contains some numerical methods
-    # like 'Euler', 'Runge', etc, which can be used in your functions.
+    # like 'euler', 'rng4', etc., which can be used in your design.
     @staticmethod
     def dynamicRunner(handleDyn, xv, xo, sTime, solverType):
-        # [New states] <- (Dynamic unction, Full-time states, Current states, Solver type)
-        if solverType == 'Euler':
+        '''
+        To calculate a prediction using a `handler` of the function, this function could be utilized.
+
+        Input variables:
+        * handler (make one by `lambda x: x**2 + 5`)
+        * Full time vector of states
+        * current states
+        * Sample time
+        * Solver (`euler`, `rng4`)
+        
+        Output variable:
+        * Predicted states
+        '''
+        if solverType == 'euler':
             # Euler method properties is given below (T is sample time):
             #   x(t+1) = x(t) + T*f(x(t))
-            return xo + sTime*handleDyn(xv)
-        elif solverType == 'Runge':
+            xn = xo + sTime*handleDyn(xv)
+        elif solverType == 'rng4':
             # 4th oder of 'Runge Kutta' is described below (T is sample time):
             #   K1     = T*f(x(t))
             #   K2     = T*f(x(t) + K1/2)
@@ -228,13 +296,13 @@ class solverCore():
             K2 = sTime*handleDyn(xv + K1/2)
             K3 = sTime*handleDyn(xv + K2/2)
             K4 = sTime*handleDyn(xv + K3)
-            return xo + 1/6*(K1 + 2*K2 + 2*K3 + K4)
+            xn = xo + 1/6*(K1 + 2*K2 + 2*K3 + K4)
         else:
             raise ValueError('The solver name is not correct, please change the word "' + solverType + '"')
-# The end of the class
+        return xn
 
 
-class plotToolLib():
+class plib():
     # In this library, all functions are related to plotting and depiction are
     # provided which can be used in 'depiction.py' file.
 
@@ -259,7 +327,20 @@ class plotToolLib():
         mpl.rc('ytick', color = AXES_COLOR, direction='in')
         mpl.rc('grid', color = '#eee')
 
-    def isi(self, params, fig = 0, save = False, width = 8.5, hwRatio = 0.65):
+    @staticmethod
+    def isi(params, fig = 0, save = False, width = 8.5, hwRatio = 0.65):
+        '''
+        Making plots prettier and ready to use in academic purposes.
+
+        Input variables:
+        * `params`
+        * Figure handler (Use `h = plt.figure(tight_layout=True)` to make one)
+        * Saving as a file - If you want the illustration is saved, enter the name of that,
+          like `image.png/pdf/jpg`, or just insert `True`
+        * Width; default is `8.5 inch`
+        * Height to width ratio between 0 and 1; default is `0.65`
+        
+        '''
         # This function make the graph pretty.
         
         if fig == 0: raise ValueError("Please enter the figure handler.")
@@ -332,18 +413,22 @@ class plotToolLib():
 
         # Saving the graph, if it is under demand.
         # User must import the figure name as 'save' var
-        if isinstance(save, str):
-            self.figureSaveCore(params, save, fig)
-        elif isinstance(save, int):
-            if save == True:
-                self.figureSaveCore(params, save, fig)
+        if isinstance(save, str) or isinstance(save, int):
+            plib.figureSaveCore(params, save, fig)
     # The end of the function
 
-    def figureSaveCore(self, params, save = True, fig = plt.gcf(), dpi = 300):
-        # This function can save figures easily, just by calling them
+    @staticmethod
+    def figureSaveCore(params, save = True, fig = plt.gcf(), dpi = 300):
+        '''
+        Use this function to save an illustration.
 
-        # Loading requirements
-        func       = functionLib()
+        Input variables:
+        * `params`
+        * Saving as a file - enter the name, like `image.png/pdf/jpg`, insert `True`, or just let it go
+        * Figure handler (Use `h = plt.figure(tight_layout=True)` to make one)
+        * Dots per inch; default is `300 pixel`
+        '''
+
         # To get current PC time to use as a prefix in the name of file
         savePath   = params['savePath'] + '/figs'
         # Default saving format
@@ -355,7 +440,7 @@ class plotToolLib():
         # Extracting the name and the directory which inported
         if (not isinstance(save, str)) and (isinstance(save, bool) or isinstance(save, int)):
             # Set the time as its name, if there is no input in the arguments
-            save = 'Faryad-' + func.getNow(3,'-')
+            save = 'Faryad-' + clib.getNow(3,'-')
             needToSetUniqAgain = False
         elif isinstance(save, str):
             # Split folders
@@ -385,7 +470,7 @@ class plotToolLib():
                 if fparts[-1] in AllFormats:
                     fFormat = fparts[0]
                     # Set the time as its name, if there is no input in the arguments
-                    save = 'Faryad-' + func.getNow(3,'-')
+                    save = 'Faryad-' + clib.getNow(3,'-')
                     needToSetUniqAgain = False
                 else:
                     # Just a name is imported, without directory
@@ -400,7 +485,7 @@ class plotToolLib():
         
         # Changing the file name 
         if params['uniqueSave'] == 1 and needToSetUniqAgain:
-            fName = save + '_' + func.getNow()
+            fName = save + '_' + clib.getNow()
         else:
             fName = save
         
@@ -425,19 +510,20 @@ class plotToolLib():
         print('The graph named "' + fName + '.' + fFormat + '" has been saved into "' + fDir + '".')
     # The end of the function
 
-    def gradient(self, colors, locs, num = 256, showIt=False):
-        # -----------------------------------------------------------------
-        # 'num' denotes the number of colors in output
-        # 'colors' connotes the gradient colors from lower to upper
-        # 'locs' provides an option to set position of colors
-        # if 'showIt' is set true, the result of gradient will be shown.
-        # the provided outputs is reported as 'outputColors' variable
-        # Example of use:
-        #       num    = 256
-        #       colors = [[1, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]
-        #       locs   = [0, 0.1, 1]
-        #       cmap   = makeGradient(colors, locs, num, 1)
-        # -----------------------------------------------------------------
+    @staticmethod
+    def linGradient(colors, locs, num = 256, showIt=False):
+        '''
+        To make a linear gradient from one color to another, use this option.
+
+        Input variables:
+        * Colors; e.g., `[[1, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]`
+        * Splitting points; e.g., `[0, 0.1, 1]`
+        * the number of colors in output; default is `256`
+        * If you want to have a pre-shown of the gradient, set this `true`
+
+        Output variables:
+        * An array comprising all colors
+        '''
 
         locs   = np.reshape(np.double(locs), [1, np.size(locs)])
         colors = np.array(colors)
@@ -447,7 +533,7 @@ class plotToolLib():
         cols       = np.zeros([1, numofGrads])
         areaa      = np.array([locs[0, 0], locs[0, -1]])
         
-        func = functionLib()
+        func = clib()
 
         for i in range(0, numofGrads+1):
             locs[0, i] = func.lineMap(locs[0, i], areaa, np.array([0, 1]))
@@ -484,10 +570,18 @@ class plotToolLib():
         # Send to the output
         return outputColors
 
-    def cmapMaker(Name, Colors ,N):
+    def cmapMaker(Name, Colors, N=256):
+        '''
+        This function is used to make a Linear Segmented Color Map (LSCM).
+
+        Input variables:
+        * Name
+        * Colors and their location in the graph line; e.g., `[(0, '#ffff00'), (0.25, '#002266'), (1, '#002266')]`
+        * The number of colors in the output
+        '''
         # Instruction
         # Colors = [(0, '#ffff00'), (0.25, '#002266'), (1, '#002266')]
-        cmap = mpl.colors.LinearSegmentedColormap.from_list(Name, Colors, N=256)
+        cmap = mpl.colors.LinearSegmentedColormap.from_list(Name, Colors, N)
         return cmap
 # The end of the class
         

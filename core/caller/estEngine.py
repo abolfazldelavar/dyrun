@@ -10,36 +10,23 @@ from core.lib.pyRequirment import *
 from core.lib.coreLib  import solverCore
 from core.caller.scopeEngine import scope
 
-class estimator():
-    # The runner of nonlinear dynamic estimators
-    # --------------------------------------------------------------------------
-    # --- INSTRUCTION -------------------------------------------------------
-    # NOTE: The expressions of 'THIS' and 'THISMODEL' refer to a dynamic block like 'Lorenz'
-    # 1) Copy THIS class into your dynamic file in folder 'blocks'.
-    # 2) Rename the new class, arbitrarily.
-    # 3) Edit properties according to your system detail.
-    # 4) Insert dynamic equations into the 'dynamics' function.
-    # 5) Write your output codes into the 'measurements' function.
-    # 6) If there is any state limitation, you can set them in 'limitations'.
-    # 7) If you want to use this block for estimation purposes,
-    #    edite the initial values and covariance matrices just below here, and
-    #    import the Jacobian matrices into the 'jacobian' function.
-    # 8) To use, put the needed below code in 'initialization.py' to set initial options
-    #    8.1. To use for running a nonlinear system, use:
-    #         models.THIS = nonlinear(THIS(), Time Line, initial=1, solver='')
-    #    8.2. To use for estimation purposes, copy the below code:
-    #         models.THISMODEL = estimator(THISMODEL(), signals.tLine, initial=1, solver='', approach='')
-    # 9) Use the piece of code showed below in 'simulation.py' to apply each step
-    #    9.1. To use for running a nonlinear system, use:
-    #         models.THIS.nextstep(Input Signal, xNoise, yNoise)
-    #    9.2. To use for estimation purposes, copy the below code:
-    #         models.THIS.nextstep(u[:,k], y[:,k])
-    # --------------------------------------------------------------------------
-    
+class estimator():    
     ## Initial function run to set default properties and make initial signals
     def __init__(self, inputModel, timeline, **kwargs):
-        # [Save internal] <- (input model class, Sample time, Time line, Options)
-        # Options are: 'InitialCondition', 'Approach'
+        '''
+        This class provides tools to estimate a nonlinear system with 
+        all internal vectors from the start of the simulation.
+        Note that the system imported must be a class defined in `blocks` path.
+
+        Input variables:
+        * Sysyem; e.g., `Lorenz()`
+        * Time line
+        
+        Options:
+        * `initial` denotes the initial condition of the estimator
+        * `approach` indicates the type of estimator - `ekf` or `ukf`
+        * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
+        '''
         self.block         = inputModel             # Get a copy of your model class
         self.timeLine      = np.reshape(timeline, [1, np.size(timeline)])
         self.sampleTime    = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
@@ -67,10 +54,10 @@ class estimator():
             if key == 'solver': self.solverType = val
         
         # This part initialize the estimator by setting parameters
-        if self.estAproach == 'EKF':
+        if self.estAproach == 'ekf':
             self.qMatrix = self.block.qMatrix
             self.rMatrix = self.block.rMatrix
-        elif self.estAproach == 'UKF':
+        elif self.estAproach == 'ukf':
             self.qMatrix = self.block.qMatrix
             self.rMatrix = self.block.rMatrix
             self.kappa   = self.block.kappa
@@ -87,10 +74,17 @@ class estimator():
     # The 'nextstep' function can provide an easy way to call
     # dydnamics of the system to calculate next sample states
     # To use this function, refer to the top INSTRUCTION part
-    def nextstep(self, u, y):
-        if self.estAproach == 'EKF':
+    def predict(self, u, y):
+        '''
+        This function can predict an ahead step utilizing the current data.
+
+        Input variables:
+        * Input array of the real system at step `k`
+        * Output array of the real system at step `k`
+        '''
+        if self.estAproach == 'ekf':
             self._nextstepEKF(u, y)
-        elif self.estAproach == 'UKF':
+        elif self.estAproach == 'ukf':
             self._nextstepUKF(u, y)
 
     ## Next step of Extended Kalman Filter (EKF)
@@ -297,15 +291,48 @@ class estimator():
     
     # This function can make a jump in the step variable
     # If no arguments are available, jump 1 step
-    def goAhead(self, i = 1):
+    def jump(self, i = 1):
+        '''
+        This function can make a jump in the step number variable.
+
+        Input variables:
+        * how many steps you would like me to jump?; default is `1`
+        '''
         self.currentStep = self.currentStep + i
     
     # Reset Block by changing the current step to zero
-    def goFirst(self):
+    def reset(self):
+        '''
+        Reseting the block via changing the current step to zero.
+        '''
         self.currentStep = 0
         
     # The below function is used to plot the internal signals
     def show(self, params, sel = 'x', **kwargs):
+        '''
+        This function makes a quick plot of internal signals.
+
+        input variables:
+        * `params`
+        * the signal must be shown - `x`, `y`, or `u`; the default value is 'x'
+
+        Options:
+            * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
+            * `derive` is used to get derivatives of signals, which can be used in different forms:
+                * `derive=False` or `derive=True`; default is `False`,
+                * `derive=[1,1,0]` is used to get derivatives of selected signals. Ones you want to get derivative must be `1` or `True`.
+            * `notime` is used to remove time and illustrate timeless plots. it can be set differently:
+                * `notime=[0,1]` or `notime=[0,1,2]` is utilized to depict signals 2D or 3D. Note that the numbers are signal indices,
+                * `notime=[[0,1], [1,2]]` or `notime=[[0,1,2], [3,0,1]]` is utilized to depict different signal groups 2D or 3D. Note that the numbers are signal indices.
+            * `save` denotes to the name of the file which the plot will be saved with. it could be `image.png/pdf/jpg` or `True`.
+            * `xlabel`, `ylabel`, and `zlabel` are the x, y, and z titles of the illustration.
+            * `legend` is used for legend issue:
+                * `legent=True` and `legent=False`, enables and disables the legent,
+                * `legent='title'` enables the legend with imported title.
+            * `lineWidth` can set the line width.
+            * `grid` can enables the grid of the illustration - `True` or `False`.
+            * `legCol` can control the column number of the legend and must be a positive integer.
+        '''
         # To illustrate states, inputs, or outputs, you might have to
         # use some varargins which are explained in 'scope' class
         if sel == 'x':

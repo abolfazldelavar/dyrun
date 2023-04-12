@@ -12,4 +12,5 @@ import os
 # import shutil                         # To remove a folder use: shutil.rmtree('logs')
 import random
 from control.matlab import *            # Similar to MATLAB functions
+from control import *
 from cv2 import imread, cvtColor, COLOR_BGR2GRAY

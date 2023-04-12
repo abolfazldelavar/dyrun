@@ -10,20 +10,22 @@ from core.lib.pyRequirment import *
 from core.lib.coreLib  import solverCore
 from core.caller.scopeEngine import scope
 
-class LTISystem():
-    ## --------------------------------------------------------------------------------
-    # Author: A. Delavar, https://github.com/abolfazldelavar
-    #  --------------------------------------------------------------------------
-    # INSTRUCTION
-    # 1) Define your LTI system using 'tf', 'zpk', 'ss', ...
-    # 2) use the below code in 'initialization.py' into the 'valuation' and 'blocks'
-    #        models.G = LTISystem(tf([1,3],[1,3,5,2,1]), params.nG, params.step, initial=2, delay=1)
-    # 3) Use below order into 'simulation.py' to apply each step
-    #        models.G.nextstep(Input, xNoise, yNoise)
-    # ---------------------------------------------------------------------------------
-    
-    def __init__(self, iSys, nSystems, sampletime, **kwargs):
-        # [self] <- (self, Number of systems, Block, Sample-time, Initial Condition, Input delay)
+# Linear dynamics
+class ltiGroup():
+    def __init__(self, iSys, sampletime, **kwargs):
+        '''
+        This class is used to make a group of LTI systems which might have interactions, too.
+        Note that linear systems or filters must be imported as a transfer function of state space form.
+
+        Input variables:
+        * Sysyem; e.g., `tf([1], [1,2,3])`
+        * Sample time
+        
+        Options:
+        * `initial` denotes the initial condition of the system
+        * `replicate` is the number of blocks; default is `1`
+        * `delay` cannotes the input delay in time scale; e.g., `1.3` second
+        '''
         self.inputsystem = iSys
         if iSys.dt == sampletime and type(iSys) == StateSpace:
             # input is a discrete-time state-space with the same sample-time
@@ -49,11 +51,14 @@ class LTISystem():
         
         initialcondition = [0]
         timedelay        = 0
+        nSystems         = 1
         for key, val in kwargs.items():
             # 'initial' is the initial value of states
             if key == 'initial': initialcondition = val
             # 'delay' is the input delay (in second)
             if key == 'delay': timedelay = val
+            # 'replicate' is the number of blocks
+            if key == 'replicate': nSystems = val
 
         # Setting the internal variables
         self.numberLTIs  = nSystems                       # The number of LTI systems
@@ -86,12 +91,15 @@ class LTISystem():
             else:
                 raise ValueError("The dimential of initial value that inserted is wrong. Check it please.")
 
-    # The 'nextstep' function can provide an easy way to call 
-    # dydnamics of the system to calculate next sample states
-    # To use this function, refer to the top INSTRUCTION part
-    def nextstep(self, u, xNoise = 0, yNoise = 0):
-        # input at time t, additive noise on states, additive noise on output
+    def predict(self, u, xNoise = 0, yNoise = 0):
+        '''
+        This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
 
+        Input variables:
+        * Input array at step `k`
+        * Internal additive noise which is added to the states
+        * External additive noise which is added to the measurements
+        '''
         # Making delayed input signal
         self.inputs = np.roll(self.inputs, -1, axis=2)
         self.inputs[:,:,-1] = u
@@ -108,50 +116,62 @@ class LTISystem():
         self.outputs = y + yNoise
         self.currentStep += 1
     
-    # This function can make a jump in the step number variable
-    # If no arguments are available, jump 1 step
-    def goahead(self, i = 1):
+    def jump(self, i = 1):
+        '''
+        This function can make a jump in the step number variable.
+
+        Input variables:
+        * how many steps you would like me to jump?; default is `1`
+        '''
         self.currentStep += i
         
-    # Reset Block by changing the current step to zero
     def reset(self):
+        '''
+        Reseting the block via changing the current step to zero.
+        '''
         self.currentStep = 0
     # The end of the function
 # The end of the class
 
+# Nonlinear dynamic group
+class nonlinearGroup():    
+    def __init__(self, inputsystem, sampletime, **kwargs):
+        '''
+        This class provides tools to make a network of nonlinear dynamics which nodes of 
+        that might have internal relations named `Synapses`.
+        Note that the system imported must be a class defined in `blocks` path.
 
-class neuronGroup():
-    # Nonlinear Dynamic
-    # --------------------------------------------------------------------------
-    # --- INSTRUCTION -------------------------------------------------------
-    # NOTE: The expressions of 'THIS' and 'THISMODEL' refer to a dynamic block like 'Izhikevich'
-    # 1) Copy THIS class into your dynamic file in folder 'blocks'.
-    # 2) Rename the new class, arbitrarily.
-    # 3) Edit properties according to your system detail.
-    # 4) Insert dynamic equations into the 'dynamics' function.
-    # 5) Write your output codes into the 'measurements' function.
-    # 6) If there is any state limitation, you can set them in 'limitations'.
-    # 7) To use, put the below code in 'initialization.py' to set initial options
-    #    models.THIS = nonlinear(THIS(), Time Line, initial=1, solver='')
-    # 8) Use the piece of code showed below in 'simulation.py' to apply each step
-    #    models.THIS.nextstep(Input Signal, xNoise, yNoise)
-    # --------------------------------------------------------------------------
-    
-    def __init__(self, inputsystem, nNeurons, sampletime, **kwargs):
-        # the number of neurons, dynamic class, sample time, initial condition
+        Input variables:
+        * Sysyem; e.g., `Izhikevich()`
+        * Sample time
+        
+        Options:
+        * `initial` denotes the initial condition of the system
+        * `replicate` is the number of blocks; default is `1`
+        * `delay` cannotes the input delay in time scale; e.g., `1.3` second
+        * `Pre` indicates a vector including node IDs which are connected to `Post`s; e.g., `[1,1,2,3]`
+        * `Post` represents a vector containing Posterior; e.g., `[3,2,3,2]`
+        * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
+        '''
         initialcondition = [0]
         timedelay        = 0
         Pre              = np.array(0)
         Post             = np.array(0)
+        nNeurons         = 1
+        solverType       = inputsystem.solverType
         for key, val in kwargs.items():
             # 'initial' can set the initial condition
             if key == 'initial': initialcondition = val
             # 'delay' denotes the input delay
             if key == 'delay': timedelay = val
+            # 'replicate' denotes the number of blocks
+            if key == 'replicate': nNeurons = val
             # 'Pre' denotes the pre numbers
             if key == 'Pre': Pre = val
             # 'Post' denotes the post numbers
             if key == 'Post': Post = val
+            #  Dynamic solver type
+            if key == 'solver': solverType = val
 
         self.delay          = timedelay              # The input signals over the time
         self.Pre            = Pre                    # Pre
@@ -163,7 +183,7 @@ class neuronGroup():
         self.numInputs      = self.block.numInputs   # The number of inputs
         self.numOutputs     = self.block.numOutputs  # The number of measurements
         self.numSynapses    = self.block.numSynapses # The figure for synapses
-        self.solverType     = self.block.solverType  # The type of dynamic solver
+        self.solverType     = solverType             # The type of dynamic solver
         self.currentStep    = 0                      # The current step of simulation
         self.initialStates  = self.block.initialStates
         self.initialStates  = np.reshape(self.initialStates, [np.size(self.initialStates), 1])
@@ -187,13 +207,17 @@ class neuronGroup():
                 self.states = initialcondition
             else:
                 raise ValueError("The dimensional of initial value that inserted is wrong. Check it please.")
-        
-    # The 'nextstep' function can provide an easy way to call 
-    # dydnamics of the system to calculate next sample states
-    # To use this function, refer to the top INSTRUCTION part
-    def nextstep(self, u, outInput = False, xNoise = 0, yNoise = 0):
-        # this object, input at time t, additive noise on states, additive noise on output
-        
+    
+    def predict(self, u, outInput = False, xNoise = 0, yNoise = 0):
+        '''
+        This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
+
+        Input variables:
+        * Input array at step `k`
+        * Input used in synapses; the default value is `False`
+        * Internal additive noise which is added to the states
+        * External additive noise which is added to the measurements
+        '''
         # Making delayed input signal
         self.inputs = np.roll(self.inputs, -1, axis=2)
         self.inputs[:,:,-1] = u
@@ -239,33 +263,21 @@ class neuronGroup():
 
 
 class nonlinear():
-    # The runner of nonlinear dynamic systems
-    # --------------------------------------------------------------------------
-    # --- INSTRUCTION -------------------------------------------------------
-    # NOTE: The expressions of 'THIS' and 'THISMODEL' refer to a dynamic block like 'Lorenz'
-    # 1) Copy THIS class into your dynamic file in folder 'blocks'.
-    # 2) Rename the new class, arbitrarily.
-    # 3) Edit properties according to your system detail.
-    # 4) Insert dynamic equations into the 'dynamics' function.
-    # 5) Write your output codes into the 'measurements' function.
-    # 6) If there is any state limitation, you can set them in 'limitations'.
-    # 7) If you want to use this block for estimation purposes,
-    #    edite the initial values and covariance matrices just below here, and
-    #    import the Jacobian matrices into the 'jacobian' function.
-    # 8) To use, put the needed below code in 'initialization.py' to set initial options
-    #    8.1. To use for running a nonlinear system, use:
-    #         models.THIS = nonlinear(THIS(), Time Line, initial=1, solver='')
-    #    8.2. To use for estimation purposes, copy the below code:
-    #         models.THISMODEL = estimator(THISMODEL(), signals.tLine, initial=1, solver='', approach='')
-    # 9) Use the piece of code showed below in 'simulation.py' to apply each step
-    #    9.1. To use for running a nonlinear system, use:
-    #         models.THIS.nextstep(Input Signal, xNoise, yNoise)
-    #    9.2. To use for estimation purposes, copy the below code:
-    #         models.THIS.nextstep(u[:,k], y[:,k])
-    # --------------------------------------------------------------------------
-
     def __init__(self, inputsystem, timeline, **kwargs):
-        # system, sample time, time line, initial states condition
+        '''
+        This class provides tools to make a nonlinear system with 
+        all internal vectors from the start of the simulation which can be utilized to
+        have more accessibility to define a wide range of systems.
+        Note that the system imported must be a class defined in `blocks` path.
+
+        Input variables:
+        * Sysyem; e.g., `Lorenz()`
+        * Time line
+        
+        Options:
+        * `initial` denotes the initial condition of the system
+        * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
+        '''
         self.block         = inputsystem            # Get a copy of your system class
         self.timeLine      = np.reshape(timeline, [1, np.size(timeline)])
         self.sampleTime    = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
@@ -288,12 +300,15 @@ class nonlinear():
             # Dynamic solver type
             if key == 'solver': self.solverType = val
         
-    # The 'nextstep' function can provide an easy way to call 
-    # dydnamics of the system to calculate next sample states
-    # To use this function, refer to the top INSTRUCTION part
-    def nextstep(self, u, xNoise = 0, yNoise = 0):
-        # input at time t, additive noise on states, additive noise on output
-        
+    def predict(self, u, xNoise = 0, yNoise = 0):
+        '''
+        This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
+
+        Input variables:
+        * Input array at step `k`
+        * Internal additive noise which is added to the states
+        * External additive noise which is added to the measurements
+        '''
         # The current time is calculated as below
         currentTime = self.timeLine[0, self.currentStep]
         
@@ -345,15 +360,48 @@ class nonlinear():
 
     # This function can make a jump in the step variable
     # If no arguments are available, jump 1 step
-    def goAhead(self, i = 1):
+    def jump(self, i = 1):
+        '''
+        This function can make a jump in the step number variable.
+
+        Input variables:
+        * how many steps you would like me to jump?; default is `1`
+        '''
         self.currentStep = self.currentStep + i
     
     # Reset Block by changing the current step to zero
-    def goFirst(self):
+    def reset(self):
+        '''
+        Reseting the block via changing the current step to zero.
+        '''
         self.currentStep = 0
         
     # The below function is used to plot the internal signals
     def show(self, params, sel = 'x', **kwargs):
+        '''
+        This function makes a quick plot of internal signals.
+
+        input variables:
+        * `params`
+        * The signal must be shown - `x`, `y`, or `u`; the default value is 'x'
+
+        Options:
+            * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
+            * `derive` is used to get derivatives of signals, which can be used in different forms:
+                * `derive=False` or `derive=True`; default is `False`,
+                * `derive=[1,1,0]` is used to get derivatives of selected signals. Ones you want to get derivative must be `1` or `True`.
+            * `notime` is used to remove time and illustrate timeless plots. it can be set differently:
+                * `notime=[0,1]` or `notime=[0,1,2]` is utilized to depict signals 2D or 3D. Note that the numbers are signal indices,
+                * `notime=[[0,1], [1,2]]` or `notime=[[0,1,2], [3,0,1]]` is utilized to depict different signal groups 2D or 3D. Note that the numbers are signal indices.
+            * `save` denotes to the name of the file which the plot will be saved with. it could be `image.png/pdf/jpg` or `True`.
+            * `xlabel`, `ylabel`, and `zlabel` are the x, y, and z titles of the illustration.
+            * `legend` is used for legend issue:
+                * `legent=True` and `legent=False`, enables and disables the legent,
+                * `legent='title'` enables the legend with imported title.
+            * `lineWidth` can set the line width.
+            * `grid` can enables the grid of the illustration - `True` or `False`.
+            * `legCol` can control the column number of the legend and must be a positive integer.
+        '''
         # To illustrate states, inputs, or outputs, you might have to
         # use some varargins which are explained in 'scope' class
         if sel == 'x':
