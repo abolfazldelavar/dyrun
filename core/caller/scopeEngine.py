@@ -20,11 +20,11 @@ class scope():
         '''
         This class is a kind of scope that can save your signals, and can be used for after running purposes.
 
-        Input variables:
+        ### Input variables:
         * Time line
         * Number of signals
         
-        Options:
+        ### Options:
         * `initial` denotes the initial condition of the estimator
         '''
         initialcondition = np.array([0])
@@ -61,10 +61,10 @@ class scope():
         '''
         To saving data given step-by-step.
 
-        Input variables:
+        ### Input variables:
         * Getting data at step `k`
 
-        Options:
+        ### Options:
         * `noise` is used to add a noise as the measurement noise
         '''
         # Inserted data, additive noise Variance
@@ -89,7 +89,7 @@ class scope():
         '''
         This function can make a jump in the step number variable.
 
-        Input variables:
+        ### Input variables:
         * how many steps you would like me to jump?; default is `1`
         '''
         self.currentStep += i
@@ -106,10 +106,10 @@ class scope():
         '''
         This function makes a quick plot of internal signals.
 
-        input variables:
+        ### input variables:
         * `params`
 
-        Options:
+        ### Options:
             * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
             * `derive` is used to get derivatives of signals, which can be used in different forms:
                 * `derive=False` or `derive=True`; default is `False`,
@@ -280,12 +280,6 @@ class scope():
             ax.set_ylabel(ylabel2)
             ax.set_zlabel(zlabel2)
 
-            # Legend options
-            # 'frameon' can hide the background and the border of the legend
-            # 'fontsize' changes the font. The value must be True or False
-            # 'bbox_to_anchor' can change the position of the legend arbitrary
-            # 'ncol' indicated the number of columns that components are arranged.
-            # 'mode' implies the mode of legend whcih can be 'expand' or ?
             ax.legend(loc='upper right', frameon=False, fontsize=14, bbox_to_anchor=(0,1,1,0), ncol=ncol, mode='expand')
         # The end of the if and elif
         
@@ -316,10 +310,10 @@ class scope():
         '''
         To depict a raster plot of internal signals.
 
-        input variables:
+        ### Input variables:
         * `params`
 
-        Options:
+        ### Options:
             * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
             * `derive` is used to get derivatives of signals, which can be used in different forms:
                 * `derive=False` or `derive=True`; default is `False`,

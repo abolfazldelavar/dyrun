@@ -18,11 +18,11 @@ class estimator():
         all internal vectors from the start of the simulation.
         Note that the system imported must be a class defined in `blocks` path.
 
-        Input variables:
+        ### Input variables:
         * Sysyem; e.g., `Lorenz()`
         * Time line
         
-        Options:
+        ### Options:
         * `initial` denotes the initial condition of the estimator
         * `approach` indicates the type of estimator - `ekf` or `ukf`
         * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
@@ -78,7 +78,7 @@ class estimator():
         '''
         This function can predict an ahead step utilizing the current data.
 
-        Input variables:
+        ### Input variables:
         * Input array of the real system at step `k`
         * Output array of the real system at step `k`
         '''
@@ -295,7 +295,7 @@ class estimator():
         '''
         This function can make a jump in the step number variable.
 
-        Input variables:
+        ### Input variables:
         * how many steps you would like me to jump?; default is `1`
         '''
         self.currentStep = self.currentStep + i
@@ -312,11 +312,11 @@ class estimator():
         '''
         This function makes a quick plot of internal signals.
 
-        input variables:
+        ### input variables:
         * `params`
         * the signal must be shown - `x`, `y`, or `u`; the default value is 'x'
 
-        Options:
+        ### Options:
             * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
             * `derive` is used to get derivatives of signals, which can be used in different forms:
                 * `derive=False` or `derive=True`; default is `False`,

@@ -104,7 +104,7 @@ class clib():
         '''
         To make a delay in a descrete function is used.
         
-        Input variables:
+        ### Input variables:
             * The type of report
                 * default: `YMDHMS`
                 * 1: `YMD_HMS`
@@ -115,7 +115,7 @@ class clib():
                 * 6: `H_M_S`
             * Splitter; like `_` or `*`
             
-        Output variable:
+        ### Output variable:
             * Output string
         '''        
         fullDate = datetime.now() # Getting full information of time
@@ -159,12 +159,12 @@ class clib():
         '''
         To make a delay in a descrete function is used.
         
-        Input variables:
+        ### Input variables:
             * Full signal
             * Current point `k`
             * Delay amount (in integer)
             
-        Output variable:
+        ### Output variable:
             * delayed value
         '''
         if k - pdelay >= 0:
@@ -206,13 +206,13 @@ class clib():
         '''
         Sigmoid generator function.
 
-        Input variables:
+        ### Input variables:
         * Time line
         * Time delay bias
         * Smoother
-        * Domain in form of [a, b]
+        * Domain in form of `[a, b]`
         
-        Output variable:
+        ### Output variable:
         * The output signal
         '''
         # Note that signal domain is a two component vector [a(1), a(2)]
@@ -225,12 +225,12 @@ class clib():
         '''
         Exposential function.
 
-        Input variables:
+        ### Input variables:
         * Time line
         * Smoother
-        * Domain in form of [a, b]
+        * Domain in form of `[a, b]`
         
-        Output variable:
+        ### Output variable:
         * The output signal
         '''
         Ss = para(1);        # Start point
@@ -244,12 +244,12 @@ class clib():
         '''
         Linear Mapping the point (or array) `x` from `[a1, b1]` domain to `y` in domain `[a2, b2]`
 
-        Input variables:
+        ### Input variables:
         * array
         * `x` domain: `[a1, b1]`
         * `y` domain: `[a2, b2]`
         
-        Output variable:
+        ### Output variable:
         * The output array
         '''
         # Map 'x' from band [w1, v1] to band [w2, v2]
@@ -271,14 +271,14 @@ class solverCore():
         '''
         To calculate a prediction using a `handler` of the function, this function could be utilized.
 
-        Input variables:
+        ### Input variables:
         * handler (make one by `lambda x: x**2 + 5`)
         * Full time vector of states
         * current states
         * Sample time
         * Solver (`euler`, `rng4`)
         
-        Output variable:
+        ### Output variable:
         * Predicted states
         '''
         if solverType == 'euler':
@@ -332,13 +332,13 @@ class plib():
         '''
         Making plots prettier and ready to use in academic purposes.
 
-        Input variables:
+        ### Input variables:
         * `params`
-        * Figure handler (Use `h = plt.figure(tight_layout=True)` to make one)
+        * Figure handler; use `h = plt.figure(tight_layout=True)` to make one.
         * Saving as a file - If you want the illustration is saved, enter the name of that,
           like `image.png/pdf/jpg`, or just insert `True`
-        * Width; default is `8.5 inch`
-        * Height to width ratio between 0 and 1; default is `0.65`
+        * Width; default is `8.5 inch`.
+        * Height to width ratio between 0 and 1; default is `0.65`.
         
         '''
         # This function make the graph pretty.
@@ -422,11 +422,11 @@ class plib():
         '''
         Use this function to save an illustration.
 
-        Input variables:
+        ### Input variables:
         * `params`
-        * Saving as a file - enter the name, like `image.png/pdf/jpg`, insert `True`, or just let it go
-        * Figure handler (Use `h = plt.figure(tight_layout=True)` to make one)
-        * Dots per inch; default is `300 pixel`
+        * Saving as a file - enter the name, like `image.png/pdf/jpg`, insert `True`, or just let it go.
+        * Figure handler; use `h = plt.figure(tight_layout=True)` to make one.
+        * Dots per inch; default is `300` pixel.
         '''
 
         # To get current PC time to use as a prefix in the name of file
@@ -515,13 +515,13 @@ class plib():
         '''
         To make a linear gradient from one color to another, use this option.
 
-        Input variables:
-        * Colors; e.g., `[[1, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]`
-        * Splitting points; e.g., `[0, 0.1, 1]`
-        * the number of colors in output; default is `256`
-        * If you want to have a pre-shown of the gradient, set this `true`
+        ### Input variables:
+        * Colors; e.g., `[[1, 0, 0, 1], [1, 1, 1, 1], [0, 0, 0, 1]]`.
+        * Splitting points; e.g., `[0, 0.1, 1]`.
+        * the number of colors in output; default is `256`.
+        * If you want to have a pre-shown of the gradient, set this `True`.
 
-        Output variables:
+        ### Output variables:
         * An array comprising all colors
         '''
 
@@ -574,13 +574,11 @@ class plib():
         '''
         This function is used to make a Linear Segmented Color Map (LSCM).
 
-        Input variables:
+        ### Input variables:
         * Name
-        * Colors and their location in the graph line; e.g., `[(0, '#ffff00'), (0.25, '#002266'), (1, '#002266')]`
-        * The number of colors in the output
+        * Colors and their location in the graph line; e.g., `[(0, '#ffff00'), (0.25, '#002266'), (1, '#002266')]`.
+        * The number of colors in the output.
         '''
-        # Instruction
-        # Colors = [(0, '#ffff00'), (0.25, '#002266'), (1, '#002266')]
         cmap = mpl.colors.LinearSegmentedColormap.from_list(Name, Colors, N)
         return cmap
 # The end of the class

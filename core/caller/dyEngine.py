@@ -17,11 +17,11 @@ class ltiGroup():
         This class is used to make a group of LTI systems which might have interactions, too.
         Note that linear systems or filters must be imported as a transfer function of state space form.
 
-        Input variables:
+        ### Input variables:
         * Sysyem; e.g., `tf([1], [1,2,3])`
         * Sample time
         
-        Options:
+        ### Options:
         * `initial` denotes the initial condition of the system
         * `replicate` is the number of blocks; default is `1`
         * `delay` cannotes the input delay in time scale; e.g., `1.3` second
@@ -95,7 +95,7 @@ class ltiGroup():
         '''
         This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
 
-        Input variables:
+        ### Input variables:
         * Input array at step `k`
         * Internal additive noise which is added to the states
         * External additive noise which is added to the measurements
@@ -120,7 +120,7 @@ class ltiGroup():
         '''
         This function can make a jump in the step number variable.
 
-        Input variables:
+        ### Input variables:
         * how many steps you would like me to jump?; default is `1`
         '''
         self.currentStep += i
@@ -141,11 +141,11 @@ class nonlinearGroup():
         that might have internal relations named `Synapses`.
         Note that the system imported must be a class defined in `blocks` path.
 
-        Input variables:
+        ### Input variables:
         * Sysyem; e.g., `Izhikevich()`
         * Sample time
         
-        Options:
+        ### Options:
         * `initial` denotes the initial condition of the system
         * `replicate` is the number of blocks; default is `1`
         * `delay` cannotes the input delay in time scale; e.g., `1.3` second
@@ -212,7 +212,7 @@ class nonlinearGroup():
         '''
         This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
 
-        Input variables:
+        ### Input variables:
         * Input array at step `k`
         * Input used in synapses; the default value is `False`
         * Internal additive noise which is added to the states
@@ -270,11 +270,11 @@ class nonlinear():
         have more accessibility to define a wide range of systems.
         Note that the system imported must be a class defined in `blocks` path.
 
-        Input variables:
+        ### Input variables:
         * Sysyem; e.g., `Lorenz()`
         * Time line
         
-        Options:
+        ### Options:
         * `initial` denotes the initial condition of the system
         * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
         '''
@@ -304,7 +304,7 @@ class nonlinear():
         '''
         This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
 
-        Input variables:
+        ### Input variables:
         * Input array at step `k`
         * Internal additive noise which is added to the states
         * External additive noise which is added to the measurements
@@ -364,7 +364,7 @@ class nonlinear():
         '''
         This function can make a jump in the step number variable.
 
-        Input variables:
+        ### Input variables:
         * how many steps you would like me to jump?; default is `1`
         '''
         self.currentStep = self.currentStep + i
@@ -381,11 +381,11 @@ class nonlinear():
         '''
         This function makes a quick plot of internal signals.
 
-        input variables:
+        ### input variables:
         * `params`
         * The signal must be shown - `x`, `y`, or `u`; the default value is 'x'
 
-        Options:
+        ### Options:
             * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
             * `derive` is used to get derivatives of signals, which can be used in different forms:
                 * `derive=False` or `derive=True`; default is `False`,

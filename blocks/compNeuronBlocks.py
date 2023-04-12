@@ -9,24 +9,12 @@
 from core.lib.pyRequirment import *
 
 class Izhikevich():
-    # Nonlinear Dynamic
-    # --------------------------------------------------------------------------
-    # --- INSTRUCTION -------------------------------------------------------
-    # NOTE: The expressions of 'THIS' and 'THISMODEL' refer to a dynamic block like 'Izhikevich'
-    # 1) Copy THIS class into your dynamic file in folder 'blocks'.
-    # 2) Rename the new class, arbitrarily.
-    # 3) Edit properties according to your system detail.
-    # 4) Insert dynamic equations into the 'dynamics' function.
-    # 5) Write your output codes into the 'measurements' function.
-    # 6) If there is any state limitation, you can set them in 'limitations'.
-    # 7) To use, put the below code in 'initialization.py' to set initial options
-    #    models.THIS = nonlinear(THIS(), Time Line, initial=1, solver='')
-    # 8) Use the piece of code showed below in 'simulation.py' to apply each step
-    #    models.THIS.nextstep(Input Signal, xNoise, yNoise)
-    # --------------------------------------------------------------------------
+    '''
+    ## Izhikevich neuron model
+    '''
     
     # This name will be showed as its plot titles
-    name          = 'Izhikevich Model'
+    name          = 'Izhikevich Neuron Model'
     numStates     = 2          # The number of states
     numInputs     = 1          # The number of inputs
     numOutputs    = 1          # The number of outputs
@@ -94,32 +82,19 @@ class Izhikevich():
 # The end of the class
 
 
-
 class Ullah():
-    # Nonlinear Dynamic
-    # --------------------------------------------------------------------------
-    # --- INSTRUCTION -------------------------------------------------------
-    # NOTE: The expressions of 'THIS' and 'THISMODEL' refer to a dynamic block like 'Izhikevich'
-    # 1) Copy THIS class into your dynamic file in folder 'blocks'.
-    # 2) Rename the new class, arbitrarily.
-    # 3) Edit properties according to your system detail.
-    # 4) Insert dynamic equations into the 'dynamics' function.
-    # 5) Write your output codes into the 'measurements' function.
-    # 6) If there is any state limitation, you can set them in 'limitations'.
-    # 7) To use, put the below code in 'initialization.py' to set initial options
-    #    models.THIS = nonlinear(THIS(), Time Line, initial=1, solver='')
-    # 8) Use the piece of code showed below in 'simulation.py' to apply each step
-    #    models.THIS.nextstep(Input Signal, xNoise, yNoise)
-    # --------------------------------------------------------------------------
+    '''
+    ## Ullah astrocyte model
+    '''
     
     # This name will be showed as its plot titles
-    name          = 'Ullah Model'
+    name          = 'Ullah Astrocyte Model'
     numStates     = 3          # The number of states
     numInputs     = 1          # The number of inputs
     numOutputs    = 1          # The number of outputs
     numSynapses   = 2          # The number of synapses signals (diffusions: Ca and IP3)
     timeType      = 'c'        # 'c' -> Continuous, 'd' -> Discrete
-    solverType    = 'Euler'    # 'Euler', 'Runge'
+    solverType    = 'euler'    # 'euler', 'rng4'
     ca_0          = 0.072495
     h_0           = 0.886314
     ip3_0         = 0.820204
