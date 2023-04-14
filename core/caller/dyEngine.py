@@ -148,7 +148,7 @@ class nonlinearGroup():
         ### Options:
         * `initial` denotes the initial condition of the system
         * `replicate` is the number of blocks; default is `1`
-        * `delay` cannotes the input delay in time scale; e.g., `1.3` second
+        * `delay` cannotes the input delay in step scale; e.g., `10` steps
         * `Pre` indicates a vector including node IDs which are connected to `Post`s; e.g., `[1,1,2,3]`
         * `Post` represents a vector containing Posterior; e.g., `[3,2,3,2]`
         * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.

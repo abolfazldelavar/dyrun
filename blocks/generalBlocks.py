@@ -135,7 +135,7 @@ class quadrupleTank():
 # The end of the class
 
 
-class Lorenz():
+class lorenz():
     '''
     ## Lorenz chaos model
     '''

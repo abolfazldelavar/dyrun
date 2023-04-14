@@ -8,7 +8,7 @@
 # Import initialize classes
 from core.lib.pyRequirment import *
 
-class Izhikevich():
+class izhikevich():
     '''
     ## Izhikevich neuron model
     '''
@@ -82,7 +82,7 @@ class Izhikevich():
 # The end of the class
 
 
-class Ullah():
+class ullah():
     '''
     ## Ullah astrocyte model
     '''
