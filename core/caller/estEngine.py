@@ -30,15 +30,16 @@ class estimator(solverCore):
         self.timeLine      = np.reshape(timeline, [1, np.size(timeline)])
         self.sampleTime    = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
         self.numSteps      = np.size(self.timeLine) # The number of all time steps
-        self.inputs        = np.zeros([self.__class__.numInputs,  self.numSteps])
-        self.outputs       = np.zeros([self.__class__.numOutputs, self.numSteps])
+        self.solverType    = self.__class__.solverType  # The type of dynamic solver
         self.currentStep   = 0                      # The current step of simulation
         self.initialStates = self.__class__.initialStates
+        self.inputs        = np.zeros([self.__class__.numInputs,  self.numSteps])
+        self.outputs       = np.zeros([self.__class__.numOutputs, self.numSteps])
         self.states        = np.zeros([self.__class__.numStates, self.numSteps + 1])
         self.states[:, 0]  = self.initialStates.flatten()
         self.covariance    = self.__class__.covariance
         self.estAproach    = 'ekf';                 # The estimation approach ('ekf', 'ukf', ...)
-        self.solverType    = self.__class__.solverType  # The type of dynamic solver
+
         
         # Extracting the arbitraty value of properties
         for key, val in kwargs.items():
