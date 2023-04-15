@@ -20,7 +20,7 @@ class izhikevich():
     numOutputs    = 1          # The number of outputs
     numSynapses   = 1          # The number of synapses signals
     timeType      = 'c'        # 'c' -> Continuous, 'd' -> Discrete
-    solverType    = 'Euler'    # 'Euler', 'Runge'
+    solverType    = 'euler'    # 'Euler', 'Runge'
     initialStates = [-60, -12] # Initial value of states
     
     # Other variables

@@ -13,6 +13,12 @@ class clib():
     # provided to be used in projects. To use, you can call 'lib.func' in
     # anywhere you need.
 
+    @staticmethod
+    # Empty structure
+    class struct():
+        def __init__(self):
+            pass
+
     # The below function print a comment periodically
     @staticmethod
     def disit(k, n, trig, params):

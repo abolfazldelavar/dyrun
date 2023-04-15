@@ -142,7 +142,7 @@ class nonlinearGroup():
         Note that the system imported must be a class defined in `blocks` path.
 
         ### Input variables:
-        * Sysyem; e.g., `Izhikevich()`
+        * Sysyem; e.g., `izhikevich()`
         * Sample time
         
         ### Options:
@@ -271,7 +271,7 @@ class nonlinear():
         Note that the system imported must be a class defined in `blocks` path.
 
         ### Input variables:
-        * Sysyem; e.g., `Lorenz()`
+        * Sysyem; e.g., `lorenz()`
         * Time line
         
         ### Options:
