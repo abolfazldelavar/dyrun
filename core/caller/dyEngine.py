@@ -134,15 +134,15 @@ class ltiGroup():
 # The end of the class
 
 # Nonlinear dynamic group
-class nonlinearGroup():    
-    def __init__(self, inputsystem, sampletime, **kwargs):
+class nonlinearGroup(solverCore):
+    def __init__(self, sampletime, **kwargs):
         '''
-        This class provides tools to make a network of nonlinear dynamics which nodes of 
-        that might have internal relations named `Synapses`.
+        ### Description:
+        This class is created as a part of `Neuron Family` which provides tools to make a network of nonlinear
+        dynamics which each node of them might have internal relation with others named `Synapses`.
         Note that the system imported must be a class defined in `blocks` path.
 
         ### Input variables:
-        * Sysyem; e.g., `izhikevich()`
         * Sample time
         
         ### Options:
@@ -155,10 +155,11 @@ class nonlinearGroup():
         '''
         initialcondition = [0]
         timedelay        = 0
+        self.__enSyn       = False
         Pre              = np.array(0)
         Post             = np.array(0)
         nNeurons         = 1
-        solverType       = inputsystem.solverType
+        solverType       = self.__class__.solverType
         for key, val in kwargs.items():
             # 'initial' can set the initial condition
             if key == 'initial': initialcondition = val
@@ -167,54 +168,49 @@ class nonlinearGroup():
             # 'replicate' denotes the number of blocks
             if key == 'replicate': nNeurons = val
             # 'Pre' denotes the pre numbers
-            if key == 'Pre': Pre = val
+            if key == 'Pre': Pre = val, self.__enSyn = True
             # 'Post' denotes the post numbers
             if key == 'Post': Post = val
             #  Dynamic solver type
             if key == 'solver': solverType = val
 
-        self.delay          = timedelay              # The input signals over the time
-        self.Pre            = Pre                    # Pre
-        self.Post           = Post                   # Post
-        self.block          = inputsystem            # Get a copy of your system class
-        self.sampleTime     = sampletime             # The simulation sample-time
-        self.numberNeurons  = nNeurons               # The number of neurons (Network size)
-        self.numStates      = self.block.numStates   # The number of states
-        self.numInputs      = self.block.numInputs   # The number of inputs
-        self.numOutputs     = self.block.numOutputs  # The number of measurements
-        self.numSynapses    = self.block.numSynapses # The figure for synapses
-        self.solverType     = solverType             # The type of dynamic solver
-        self.currentStep    = 0                      # The current step of simulation
-        self.initialStates  = self.block.initialStates
+        self.delay          = timedelay   # The input signals over the time
+        self.Pre            = Pre         # Pre
+        self.Post           = Post        # Post
+        self.sampleTime     = sampletime  # The simulation sample-time
+        self.numberNeurons  = nNeurons    # The number of neurons (Network size)
+        self.solverType     = solverType  # The type of dynamic solver
+        self.initialStates  = self.__class__.initialStates
         self.initialStates  = np.reshape(self.initialStates, [np.size(self.initialStates), 1])
-        self.synapseCurrent = np.zeros([self.numSynapses, self.numberNeurons])
-        self.inputs         = np.zeros([self.numInputs,  self.numberNeurons, self.delay + 1])
-        self.outputs        = np.zeros([self.numOutputs, self.numberNeurons])
-        self.states         = np.ones([self.numStates,  self.numberNeurons])
+        self.synapseCurrent = np.zeros([self.__class__.numSynapsesSignal, self.numberNeurons])
+        self.inputs         = np.zeros([self.__class__.numInputs,  self.numberNeurons, self.delay + 1])
+        self.outputs        = np.zeros([self.__class__.numOutputs, self.numberNeurons])
+        self.states         = np.ones([self.__class__.numStates,  self.numberNeurons])
         self.states         = self.initialStates*self.states
         
         # If the initial input does not exist, set it zero
         # Else, put the initial condition in the state matrix
         initialcondition = np.array(initialcondition)
         iniSh = initialcondition.shape
-        if sum(iniSh) == self.numStates or sum(iniSh) == self.numStates + 1:
+        if sum(iniSh) == self.__class__.numStates or sum(iniSh) == self.__class__.numStates + 1:
             # If the imported initial value is not a column vector, do this:
             initialcondition = np.reshape(initialcondition, [np.size(initialcondition), 1])
             self.states += 1
             self.states  = initialcondition*self.states
         elif sum(iniSh) != 1 and sum(iniSh) != 2:
-            if iniSh == (self.numStates, self.numberNeurons):
+            if iniSh == (self.__class__.numStates, self.numberNeurons):
                 self.states = initialcondition
             else:
                 raise ValueError("The dimensional of initial value that inserted is wrong. Check it please.")
     
-    def predict(self, u, outInput = False, xNoise = 0, yNoise = 0):
+    def __call__(self, u, outInput = False, xNoise = 0, yNoise = 0):
         '''
-        This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
+        ### Description:
+        This function can provide a prediction of the next step, using the current inputs.
 
         ### Input variables:
         * Input array at step `k`
-        * Input used in synapses; the default value is `False`
+        * Output control signal used in synapse calculations; the default value is `False`
         * Internal additive noise which is added to the states
         * External additive noise which is added to the measurements
         '''
@@ -226,39 +222,42 @@ class nonlinearGroup():
         # Set before-state-limitations:
         # This can be used if we want to process on states before
         # calculating the next states by dynamics.
-        x = self.block.limitations(self.states, 0)
+        x = self.__class__._limitations(self.__class__, self.states, 0)
         
         # The below handle function is used in the following
-        handleDyn   = lambda xx: self.block.dynamics(xx, systemInput, self.synapseCurrent)
+        handleDyn = lambda xx: self.__class__._dynamics(self.__class__, xx, systemInput, self.synapseCurrent)
         
         # This part calculates the states and outputs using the system dynamics
-        if self.block.timeType == 'c':
+        if self.__class__.timeType == 'c':
             # The type of solver can be under your control
             # To change your solver, do not change any code here
             # Change the solver type in 'Izhikevich.m' file or others
             
-            x = solverCore.dynamicRunner(handleDyn, x, x, self.sampleTime, self.solverType)
+            x = super().dynamicRunner(handleDyn, x, x, self.sampleTime, self.solverType)
         else:
             # When the inserted system is discrete time, just the
             # dynamic must be solved as below
             x = handleDyn(x)
         
         # Set after-state-limitations
-        x = self.block.limitations(x, 1)
+        x = self.__class__._limitations(self.__class__, x, 1)
         
         # The output of the system is solved by the measurement
         # dynamics of the system which are available in 'Izhikevich.m' file
-        y = self.block.measurements(x, u, self.solverType)
+        y = self.__class__._measurements(self.__class__, x, u, self.solverType)
 
         # Inter connections and synapses' currents are calculated here
-        if self.Pre.any() and self.Post.any():
+        if self.__enSyn == True:
             if outInput == False: outInput = self.inputs[:,:,-1]*0
-            self.synapseCurrent = self.block.synapses(x, outInput, self.Pre, self.Post)
+            self.synapseCurrent = self.__class__._synapses(self.__class__, x, outInput, self.Pre, self.Post)
         
         # Updating internal signals
         self.states  = x + xNoise
         self.outputs = y + yNoise
     # The end of the function
+
+    def __repr__(self):
+        return f"** {self.__class__.__name__} **\nNumber of elements: {self.numberNeurons}\nSolver Type: '{self.solverType}'"
 # The end of the class
 
 
