@@ -9,9 +9,11 @@
 from core.lib.pyRequirment import *
 
 class clib():
-    # Default functions, neccessary and essential functions that have been
-    # provided to be used in projects. To use, you can call 'lib.func' in
-    # anywhere you need.
+    '''
+    ### Description:
+    This library provides you several practical functions that some of them are essential for the framework, 
+    and others might be useful for other purposes.
+    '''
 
     @staticmethod
     # Empty structure
@@ -25,10 +27,10 @@ class clib():
         # Trig: [Started time, Trigger, Previous k]
         nowt = time() - trig[0]
         if int(nowt) >= trig[1]:
-            trig[1] = trig[1] + params['commandIntervalSpan']   # To make a horizon
+            trig[1] = trig[1] + params.commandIntervalSpan   # To make a horizon
             mea     = k - trig[2]                               # Calculatation of the mean
             trig[2] = k
-            trem    = (n - k)*params['commandIntervalSpan']/mea # Remained time in second
+            trem    = (n - k)*params.commandIntervalSpan/mea # Remained time in second
             tremmin = min(int(trem/60),1e5)                     # How minutes
             tremsec = round(trem%60)                            # Remained seconds
             comPerc = round(k/n*100)                            # Completed percentage
@@ -55,8 +57,8 @@ class clib():
             # Releasing the provided text
             print(txt)
             # Starting to append command context into the diary file
-            if params['makeDiary'] == True:
-                with open(params['diaryDir'] + '/' + params['diaryFile'] + '.txt', 'a', encoding='utf-8') as f:
+            if params.makeDiary == True:
+                with open(params.diaryDir + '/' + params.diaryFile + '.txt', 'a', encoding='utf-8') as f:
                     f.write('\n' + txt)
         # Sending data for the next step
         return trig
@@ -76,9 +78,9 @@ class clib():
         fullTx = '\n'.join(txt)
         print(fullTx)
         # Check the directory and start a diary to save command window
-        if params['makeDiary'] == True:
-            if not os.path.isdir(params['diaryDir']): os.makedirs(params['diaryDir'])
-            with open(params['diaryDir'] + '/' + params['diaryFile'] + '.txt', 'a', encoding='utf-8') as f:
+        if params.makeDiary == True:
+            if not os.path.isdir(params.diaryDir): os.makedirs(params.diaryDir)
+            with open(params.diaryDir + '/' + params.diaryFile + '.txt', 'a', encoding='utf-8') as f:
                 f.write(fullTx)
         # Send the current time to the output
         return time()
@@ -100,14 +102,15 @@ class clib():
         fullTx  = '\n'.join(txt)
         print(fullTx)
         # Starting to append command context into the diary file
-        if params['makeDiary'] == True:
-            with open(params['diaryDir'] + '/' + params['diaryFile'] + '.txt', 'a', encoding='utf-8') as f:
+        if params.makeDiary == True:
+            with open(params.diaryDir + '/' + params.diaryFile + '.txt', 'a', encoding='utf-8') as f:
                 f.write('\n' + fullTx)
 
     ## Returning a text contained date and time
     @staticmethod
     def getNow(typeReport = 0, splitchar = '_'):
         '''
+        ### Description:
         To make a delay in a descrete function is used.
         
         ### Input variables:
@@ -163,6 +166,7 @@ class clib():
     @staticmethod
     def delayed(u, k, pdelay):
         '''
+        ### Description:
         To make a delay in a descrete function is used.
         
         ### Input variables:
@@ -210,6 +214,7 @@ class clib():
     @staticmethod
     def expInverse(tLine, bias, alph, areaa):
         '''
+        ### Description:
         Sigmoid generator function.
 
         ### Input variables:
@@ -229,6 +234,7 @@ class clib():
     @staticmethod
     def exponensh(tLine, Sr, para):
         '''
+        ### Description:
         Exposential function.
 
         ### Input variables:
@@ -248,6 +254,7 @@ class clib():
     @staticmethod
     def lineMap(x, fro, to):
         '''
+        ### Description:
         Linear Mapping the point (or array) `x` from `[a1, b1]` domain to `y` in domain `[a2, b2]`
 
         ### Input variables:
@@ -270,11 +277,16 @@ class clib():
 # The end of the class
 
 class solverCore():
+    '''
+    ### Description:
+    The numerical core of these framework are considered as this class which includes `optimizations` and other `numerical solvers`.
+    '''
     # Dynamic Solver: This funtion contains some numerical methods
     # like 'euler', 'rng4', etc., which can be used in your design.
     @staticmethod
     def dynamicRunner(handleDyn, xv, xo, sTime, solverType):
         '''
+        ### Description:
         To calculate a prediction using a `handler` of the function, this function could be utilized.
 
         ### Input variables:
@@ -309,10 +321,17 @@ class solverCore():
 
 
 class plib():
-    # In this library, all functions are related to plotting and depiction are
-    # provided which can be used in 'depiction.py' file.
-
-    def __init__(self):
+    '''
+    ### Description:
+    This library provides you several practical functions related to `illustration` purposes.
+    '''
+    @staticmethod
+    def initialize():
+        '''
+        ### Description:
+        This function initializes the environment and sets the `font.family`, `font.size`, and `text.usetex` to any further draws.
+        Furthermore, the size of plot windows and several other essential properties are adjusted.        
+        '''
         # Setting the font of LaTeX
         plt.rcParams.update({
             "text.usetex": True,
@@ -336,6 +355,7 @@ class plib():
     @staticmethod
     def isi(params, fig = 0, save = False, width = 8.5, hwRatio = 0.65):
         '''
+        ### Description:
         Making plots prettier and ready to use in academic purposes.
 
         ### Input variables:
@@ -419,13 +439,14 @@ class plib():
 
         # Saving the graph, if it is under demand.
         # User must import the figure name as 'save' var
-        if isinstance(save, str) or isinstance(save, int):
+        if not save==False:
             plib.figureSaveCore(params, save, fig)
     # The end of the function
 
     @staticmethod
     def figureSaveCore(params, save = True, fig = plt.gcf(), dpi = 300):
         '''
+        ### Description:
         Use this function to save an illustration.
 
         ### Input variables:
@@ -436,9 +457,9 @@ class plib():
         '''
 
         # To get current PC time to use as a prefix in the name of file
-        savePath   = params['savePath'] + '/figs'
+        savePath   = params.savePath + '/figs'
         # Default saving format
-        fFormat    = params['defaultImageFormat']
+        fFormat    = params.defaultImageFormat
         AllFormats = ['jpg', 'png', 'pdf']
         isSetDirec = False
         needToSetUniqAgain = True
@@ -490,7 +511,7 @@ class plib():
         save     = str(save)
         
         # Changing the file name 
-        if params['uniqueSave'] == 1 and needToSetUniqAgain:
+        if params.uniqueSave == 1 and needToSetUniqAgain:
             fName = save + '_' + clib.getNow()
         else:
             fName = save
@@ -519,6 +540,7 @@ class plib():
     @staticmethod
     def linGradient(colors, locs, num = 256, showIt=False):
         '''
+        ### Description:
         To make a linear gradient from one color to another, use this option.
 
         ### Input variables:
@@ -578,6 +600,7 @@ class plib():
 
     def cmapMaker(Name, Colors, N=256):
         '''
+        ### Description:
         This function is used to make a Linear Segmented Color Map (LSCM).
 
         ### Input variables:

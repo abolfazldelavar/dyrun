@@ -85,7 +85,7 @@ class scope():
         
     # This function can make a jump in the step number variable
     # If no arguments are available, jump 1 step
-    def jump(self, i = 1):
+    def __iadd__(self, i = 1):
         '''
         This function can make a jump in the step number variable.
 
@@ -131,7 +131,7 @@ class scope():
         select = -1
         derive = [[0]]
         notime = [[0]]
-        save   = 0
+        save   = False
         xlabel = '$x$'
         ylabel = '$y$'
         zlabel = '$z$'

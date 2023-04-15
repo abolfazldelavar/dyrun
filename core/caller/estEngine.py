@@ -10,16 +10,16 @@ from core.lib.pyRequirment import *
 from core.lib.coreLib  import solverCore
 from core.caller.scopeEngine import scope
 
-class estimator():    
+class estimator(solverCore):
     ## Initial function run to set default properties and make initial signals
-    def __init__(self, inputModel, timeline, **kwargs):
+    def __init__(self, timeline, **kwargs):
         '''
+        ### Description:
         This class provides tools to estimate a nonlinear system with 
         all internal vectors from the start of the simulation.
         Note that the system imported must be a class defined in `blocks` path.
 
         ### Input variables:
-        * Sysyem; e.g., `Lorenz()`
         * Time line
         
         ### Options:
@@ -27,22 +27,18 @@ class estimator():
         * `approach` indicates the type of estimator - `ekf` or `ukf`
         * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
         '''
-        self.block         = inputModel             # Get a copy of your model class
         self.timeLine      = np.reshape(timeline, [1, np.size(timeline)])
         self.sampleTime    = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
         self.numSteps      = np.size(self.timeLine) # The number of all time steps
-        self.numStates     = self.block.numStates   # The number of states
-        self.numInputs     = self.block.numInputs   # The number of inputs
-        self.numOutputs    = self.block.numOutputs  # The number of measurements
-        self.inputs        = np.zeros([self.numInputs,  self.numSteps])
-        self.outputs       = np.zeros([self.numOutputs, self.numSteps])
+        self.inputs        = np.zeros([self.__class__.numInputs,  self.numSteps])
+        self.outputs       = np.zeros([self.__class__.numOutputs, self.numSteps])
         self.currentStep   = 0                      # The current step of simulation
-        self.initialStates = self.block.initialStates
-        self.states        = np.zeros([self.numStates, self.numSteps + 1])
+        self.initialStates = self.__class__.initialStates
+        self.states        = np.zeros([self.__class__.numStates, self.numSteps + 1])
         self.states[:, 0]  = self.initialStates.flatten()
-        self.covariance    = self.block.covariance
-        self.estAproach    = 'EKF';                 # The estimation approach ('EKF', 'UKF', ...)
-        self.solverType    = self.block.solverType  # The type of dynamic solver
+        self.covariance    = self.__class__.covariance
+        self.estAproach    = 'ekf';                 # The estimation approach ('ekf', 'ukf', ...)
+        self.solverType    = self.__class__.solverType  # The type of dynamic solver
         
         # Extracting the arbitraty value of properties
         for key, val in kwargs.items():
@@ -55,15 +51,15 @@ class estimator():
         
         # This part initialize the estimator by setting parameters
         if self.estAproach == 'ekf':
-            self.qMatrix = self.block.qMatrix
-            self.rMatrix = self.block.rMatrix
+            self.qMatrix = self.__class__.qMatrix
+            self.rMatrix = self.__class__.rMatrix
         elif self.estAproach == 'ukf':
-            self.qMatrix = self.block.qMatrix
-            self.rMatrix = self.block.rMatrix
-            self.kappa   = self.block.kappa
-            self.alpha   = self.block.alpha
+            self.qMatrix = self.__class__.qMatrix
+            self.rMatrix = self.__class__.rMatrix
+            self.kappa   = self.__class__.kappa
+            self.alpha   = self.__class__.alpha
             # Dependent variables
-            self.nUKF    = self.numStates
+            self.nUKF    = self.__class__.numStates
             self.lambd   = np.power(self.alpha,2)*(self.nUKF + self.kappa) - self.nUKF
             self.betta   = 2
             # Making weights
@@ -74,8 +70,9 @@ class estimator():
     # The 'nextstep' function can provide an easy way to call
     # dydnamics of the system to calculate next sample states
     # To use this function, refer to the top INSTRUCTION part
-    def predict(self, u, y):
+    def __call__(self, u, y):
         '''
+        ### Description:
         This function can predict an ahead step utilizing the current data.
 
         ### Input variables:
@@ -83,12 +80,12 @@ class estimator():
         * Output array of the real system at step `k`
         '''
         if self.estAproach == 'ekf':
-            self._nextstepEKF(u, y)
+            self.__nextstepEKF(u, y)
         elif self.estAproach == 'ukf':
-            self._nextstepUKF(u, y)
+            self.__nextstepUKF(u, y)
 
     ## Next step of Extended Kalman Filter (EKF)
-    def _nextstepEKF(self, u, y):
+    def __nextstepEKF(self, u, y):
         # [Internal update] <- (Internal, Input, Output)
         
         ## Initialize parameters
@@ -100,11 +97,11 @@ class estimator():
         y = np.reshape(y, [np.size(y), 1])
         
         # Using dynamics of system to calculate Jacobians
-        [A, L, H, M] = self.block.jacobians(self.states,      \
-                                            self.inputs,      \
-                                            self.currentStep, \
-                                            self.sampleTime,  \
-                                            currentTime)
+        [A, L, H, M] = self.__class__._jacobians(self.states,     \
+                                                self.inputs,      \
+                                                self.currentStep, \
+                                                self.sampleTime,  \
+                                                currentTime)
         ## Prediction step - Update xp
         #  This part tries to obtain a prediction estimate from dynamic
         #  model of your system directly from nonlinear equations
@@ -112,27 +109,27 @@ class estimator():
         xm = np.reshape(xm, [np.size(xm), 1])
 
         # Set before-state-limitations
-        xv  = self.block.limitations(self.states, 0)
+        xv  = self.__class__._limitations(self.states, 0)
         
         # The below handle function is used in the following
-        handleDyn = lambda xx: self.block.dynamics(xx,                   \
-                                                   self.inputs,          \
-                                                   self.currentStep,     \
-                                                   self.sampleTime,      \
-                                                   currentTime)
+        handleDyn = lambda xx: self.__class__._dynamics(xx,                   \
+                                                        self.inputs,          \
+                                                        self.currentStep,     \
+                                                        self.sampleTime,      \
+                                                        currentTime)
         # This part calculates the states and outputs using the system dynamics
-        if self.block.timeType == 'c':
+        if self.__class__.timeType == 'c':
             # The type of solver can be under your control
             # To change your solver type, do not change any code here
             # Change the solver type in the block class or its called order in 'initialization.py'
-            xp = solverCore.dynamicRunner(handleDyn, xv, xm, self.sampleTime, self.solverType)
+            xp = super().dynamicRunner(handleDyn, xv, xm, self.sampleTime, self.solverType)
         else:
             # When the inserted system is discrete time, just the
             # dynamic must be solved as below
             xp = handleDyn(xv)
 
         # Set after-state-limitations
-        xp = self.block.limitations(xp, 1)
+        xp = self.__class__._limitations(xp, 1)
         
         # Prediction step - Update covariance matrix
         Pp = A.dot(self.covariance).dot(A.transpose()) + \
@@ -160,7 +157,7 @@ class estimator():
         self.currentStep += 1                               # Go to the next step
     
     ## Next step of Unscented Kalman Filter (UKF)
-    def _nextstepUKF(self, u, y):
+    def __nextstepUKF(self, u, y):
         # [Internal update] <- (Internal, Input, Output)
         # ------------------------------------------------------
         # To see how this algorithm works, refer to below source:
@@ -179,11 +176,11 @@ class estimator():
         self.outputs[:, self.currentStep] = y
         y = np.reshape(y, [np.size(y), 1])
         # Using dynamics of system to calculate Jacobians
-        [A, L, H, M] = self.block.jacobians(self.states,      \
-                                            self.inputs,      \
-                                            self.currentStep, \
-                                            self.sampleTime,  \
-                                            currentTime)
+        [A, L, H, M] = self.__class__._jacobians(self.states,     \
+                                                self.inputs,      \
+                                                self.currentStep, \
+                                                self.sampleTime,  \
+                                                currentTime)
         # Getting last states prior and its covariance
         xm = self.states[:, self.currentStep]
         xm = np.reshape(xm, [np.size(xm), 1])
@@ -201,31 +198,31 @@ class estimator():
         #  This part tries to obtain a prediction estimate from dynamic
         #  model of your system directly from nonlinear equations
         nSpoints = sp.shape[1]
-        xp       = np.zeros([self.numStates, 1])
-        Xp       = np.zeros([self.numStates, nSpoints])
+        xp       = np.zeros([self.__class__.numStates, 1])
+        Xp       = np.zeros([self.__class__.numStates, nSpoints])
         for i in range(0, nSpoints):
             changedFullState = self.states
             changedFullState[:, self.currentStep] = sp[:, i]
             
             # Set before-state-limitations
-            xv  = self.block.limitations(changedFullState, 0)
+            xv  = self.__class__._limitations(changedFullState, 0)
              # The below handle function is used in the following
-            handleDyn = lambda xx: self.block.dynamics(xx,            \
-                                                    self.inputs,      \
-                                                    self.currentStep, \
-                                                    self.sampleTime,  \
-                                                    currentTime)
-            if self.block.timeType == 'c':
-                Xp[:,i] = solverCore.dynamicRunner(handleDyn,         \
-                                                    xv,               \
-                                                    xm,               \
-                                                    self.sampleTime,  \
-                                                    self.block.solverType).flatten()
+            handleDyn = lambda xx: self.__class__._dynamics(xx,               \
+                                                            self.inputs,      \
+                                                            self.currentStep, \
+                                                            self.sampleTime,  \
+                                                            currentTime)
+            if self.__class__.timeType == 'c':
+                Xp[:,i] = super().dynamicRunner(handleDyn,        \
+                                                xv,               \
+                                                xm,               \
+                                                self.sampleTime,  \
+                                                self.solverType).flatten()
             else:
                 Xp[:,i] = handleDyn(xv)
             
             # Set after-state-limitations
-            Xp[:,i] = self.block.limitations(Xp[:,i], 1)
+            Xp[:,i] = self.__class__._limitations(Xp[:,i], 1)
             # Prediction update
             temp1 = Xp[:, i]
             xp = xp + self.wm[i,0]*(np.reshape(temp1, [np.size(temp1), 1]))
@@ -246,16 +243,16 @@ class estimator():
         if not np.any(np.isnan(y)):
             ## Solving output estimation using predicted data, STEP 5
             #  This part tries to obtain a prediction output from sigma points
-            zb = np.zeros([self.numOutputs, 1])
-            Zb = np.zeros([self.numOutputs, nSpoints])
+            zb = np.zeros([self.__class__.numOutputs, 1])
+            Zb = np.zeros([self.__class__.numOutputs, nSpoints])
             for i in range(0, nSpoints):
                 changedFullState = self.states
                 changedFullState[:, self.currentStep] = Xp[:, i] #Or 'Xp[:, i]' instead of 'sp[:, i]'
-                Zb[:,i] = self.block.measurements(changedFullState,   \
-                                                    self.inputs,      \
-                                                    self.currentStep, \
-                                                    self.sampleTime,  \
-                                                    currentTime).flatten()
+                Zb[:,i] = self.__class__._measurements(changedFullState,  \
+                                                        self.inputs,      \
+                                                        self.currentStep, \
+                                                        self.sampleTime,  \
+                                                        currentTime).flatten()
                 # Predicted output
                 temp1 = Zb[:, i]
                 zb = zb + self.wm[i,0]*(np.reshape(temp1, [np.size(temp1), 1]))
@@ -291,8 +288,9 @@ class estimator():
     
     # This function can make a jump in the step variable
     # If no arguments are available, jump 1 step
-    def jump(self, i = 1):
+    def __iadd__(self, i = 1):
         '''
+        ### Description:
         This function can make a jump in the step number variable.
 
         ### Input variables:
@@ -303,6 +301,7 @@ class estimator():
     # Reset Block by changing the current step to zero
     def reset(self):
         '''
+        ### Description:
         Reseting the block via changing the current step to zero.
         '''
         self.currentStep = 0
@@ -310,6 +309,7 @@ class estimator():
     # The below function is used to plot the internal signals
     def show(self, params, sel = 'x', **kwargs):
         '''
+        ### Description:
         This function makes a quick plot of internal signals.
 
         ### input variables:
@@ -337,16 +337,19 @@ class estimator():
         # use some varargins which are explained in 'scope' class
         if sel == 'x':
             signal   = self.states[:, 0:self.numSteps]
-            nSignals = self.numStates
+            nSignals = self.__class__.numStates
         elif sel == 'y':
             signal   = self.outputs[:, 0:self.numSteps]
-            nSignals = self.numOutputs
+            nSignals = self.__class__.numOutputs
         elif sel == 'u':
             signal   = self.inputs[:, 0:self.numSteps]
-            nSignals = self.numInputs
+            nSignals = self.__class__.numInputs
         # Make a scope
-        scp = scope(self.timeLine, nSignals, signal)
+        scp = scope(self.timeLine, nSignals, initial=signal)
         
-        scp.show(params, title=self.block.name, **kwargs)
+        scp.show(params, title=self.__class__.name, **kwargs)
     # The end of the function
+    
+    def __repr__(self):
+        return f"** {self.__class__.__name__} **\nCurrent point: {self.currentStep}/{self.numSteps}\nSolver Type: '{self.solverType}'"
 # The end of the class

@@ -14,6 +14,7 @@ from core.caller.scopeEngine import scope
 class ltiGroup():
     def __init__(self, iSys, sampletime, **kwargs):
         '''
+        ### Description:
         This class is used to make a group of LTI systems which might have interactions, too.
         Note that linear systems or filters must be imported as a transfer function of state space form.
 
@@ -24,7 +25,7 @@ class ltiGroup():
         ### Options:
         * `initial` denotes the initial condition of the system
         * `replicate` is the number of blocks; default is `1`
-        * `delay` cannotes the input delay in time scale; e.g., `1.3` second
+        * `delay` cannotes the input delay in step scale; e.g., `18` steps
         '''
         self.inputsystem = iSys
         if iSys.dt == sampletime and type(iSys) == StateSpace:
@@ -70,8 +71,7 @@ class ltiGroup():
         self.numStates   = self.block.A.shape[0]          # The number of states
         self.numInputs   = self.block.B.shape[1]          # The number of inputs
         self.numOutputs  = self.block.C.shape[0]          # The number of measurements
-        self.currentStep = 0                              # The current step of simulation
-        self.delay       = int(timedelay/self.sampleTime) # Delay steps
+        self.delay       = timedelay                      # Delay steps
         self.inputs      = np.zeros([self.numInputs , self.numberLTIs, self.delay + 1])
         self.outputs     = np.zeros([self.numOutputs, self.numberLTIs])
         self.states      = np.zeros([self.numStates, self.numberLTIs])
@@ -91,8 +91,9 @@ class ltiGroup():
             else:
                 raise ValueError("The dimential of initial value that inserted is wrong. Check it please.")
 
-    def predict(self, u, xNoise = 0, yNoise = 0):
+    def __call__(self, u, xNoise = 0, yNoise = 0):
         '''
+        ### Description:
         This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
 
         ### Input variables:
@@ -116,21 +117,8 @@ class ltiGroup():
         self.outputs = y + yNoise
         self.currentStep += 1
     
-    def jump(self, i = 1):
-        '''
-        This function can make a jump in the step number variable.
-
-        ### Input variables:
-        * how many steps you would like me to jump?; default is `1`
-        '''
-        self.currentStep += i
-        
-    def reset(self):
-        '''
-        Reseting the block via changing the current step to zero.
-        '''
-        self.currentStep = 0
-    # The end of the function
+    def __repr__(self):
+        return f"** {self.__class__.__name__} **\nNumber of elements: {self.numberLTIs}"
 # The end of the class
 
 # Nonlinear dynamic group
@@ -206,7 +194,7 @@ class nonlinearGroup(solverCore):
     def __call__(self, u, outInput = False, xNoise = 0, yNoise = 0):
         '''
         ### Description:
-        This function can provide a prediction of the next step, using the current inputs.
+        This function can provide a `prediction` of the next step, using the current inputs.
 
         ### Input variables:
         * Input array at step `k`
@@ -261,35 +249,31 @@ class nonlinearGroup(solverCore):
 # The end of the class
 
 
-class nonlinear():
-    def __init__(self, inputsystem, timeline, **kwargs):
+class nonlinear(solverCore):
+    def __init__(self, timeline, **kwargs):
         '''
+        ### Description:
         This class provides tools to make a nonlinear system with 
         all internal vectors from the start of the simulation which can be utilized to
         have more accessibility to define a wide range of systems.
         Note that the system imported must be a class defined in `blocks` path.
 
         ### Input variables:
-        * Sysyem; e.g., `lorenz()`
         * Time line
         
         ### Options:
         * `initial` denotes the initial condition of the system
         * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
         '''
-        self.block         = inputsystem            # Get a copy of your system class
         self.timeLine      = np.reshape(timeline, [1, np.size(timeline)])
         self.sampleTime    = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
         self.numSteps      = np.size(self.timeLine) # The number of sample steps
-        self.numStates     = self.block.numStates   # The number of states
-        self.numInputs     = self.block.numInputs   # The number of inputs
-        self.numOutputs    = self.block.numOutputs  # The number of measurements
-        self.solverType    = self.block.solverType  # The type of dynamic solver
+        self.solverType    = self.__class__.solverType  # The type of dynamic solver
         self.currentStep   = 0                      # The current step of simulation
-        self.initialStates = self.block.initialStates
-        self.inputs        = np.zeros([self.numInputs,  self.numSteps])
-        self.outputs       = np.zeros([self.numOutputs, self.numSteps])
-        self.states        = np.zeros([self.numStates,  self.numSteps + 1])
+        self.initialStates = self.__class__.initialStates
+        self.inputs        = np.zeros([self.__class__.numInputs,  self.numSteps])
+        self.outputs       = np.zeros([self.__class__.numOutputs, self.numSteps])
+        self.states        = np.zeros([self.__class__.numStates,  self.numSteps + 1])
         self.states[:, 0]  = self.initialStates.flatten()
 
         # Extracting the arbitraty value of properties
@@ -299,9 +283,10 @@ class nonlinear():
             # Dynamic solver type
             if key == 'solver': self.solverType = val
         
-    def predict(self, u, xNoise = 0, yNoise = 0):
+    def __call__(self, u, xNoise = 0, yNoise = 0):
         '''
-        This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
+        ### Description:
+        This function can provide a `prediction` of the next step, using the current inputs.
 
         ### Input variables:
         * Input array at step `k`
@@ -317,38 +302,40 @@ class nonlinear():
         # Set before-state-limitations:
         # This can be used if we want to process on states before
         # calculating the next states by dynamics.
-        xv = self.block.limitations(self.states, 0)
+        xv = self.__class__._limitations(self.__class__, self.states, 0)
         # Getting the previous states
         xo = self.states[:, self.currentStep]
         xo = np.reshape(xo, [np.size(xo), 1])
         
         # The below handle function is used in the following
-        handleDyn = lambda xx: self.block.dynamics(xx,                   \
+        handleDyn = lambda xx: self.__class__._dynamics(self.__class__,  \
+                                                   xx,                   \
                                                    self.inputs,          \
                                                    self.currentStep,     \
                                                    self.sampleTime,      \
                                                    currentTime)
         
         # This part calculates the states and outputs using the system dynamics
-        if self.block.timeType == 'c':
+        if self.__class__.timeType == 'c':
             # The type of solver can be under your control
             # To change your solver type, do not change any code here
             # Change the solver type in 'chaos.m' file or others
-            x = solverCore.dynamicRunner(handleDyn, xv, xo, self.sampleTime, self.solverType)
+            x = super().dynamicRunner(handleDyn, xv, xo, self.sampleTime, self.solverType)
         else:
             # When the inserted system is discrete time, just the
             # dynamic must be solved as below
             x = handleDyn(xv)
         
         # Set after-state-limitations
-        x = self.block.limitations(x, 1)
+        x = self.__class__._limitations(self.__class__, x, 1)
         
         # The output of the system is solved by the measurement
         # dynamics of the system which are available in 'chaos.m' file
-        y = self.block.measurements(self.states,        \
-                                    self.inputs,        \
-                                    self.currentStep,   \
-                                    self.sampleTime,    \
+        y = self.__class__._measurements(self.__class__, \
+                                    self.states,         \
+                                    self.inputs,         \
+                                    self.currentStep,    \
+                                    self.sampleTime,     \
                                     currentTime)
         # Update internal signals which later can be used for plotting
         # and programming for other parts of the code
@@ -359,8 +346,9 @@ class nonlinear():
 
     # This function can make a jump in the step variable
     # If no arguments are available, jump 1 step
-    def jump(self, i = 1):
+    def __iadd__(self, i = 1):
         '''
+        ### Description:
         This function can make a jump in the step number variable.
 
         ### Input variables:
@@ -371,6 +359,7 @@ class nonlinear():
     # Reset Block by changing the current step to zero
     def reset(self):
         '''
+        ### Description:
         Reseting the block via changing the current step to zero.
         '''
         self.currentStep = 0
@@ -378,6 +367,7 @@ class nonlinear():
     # The below function is used to plot the internal signals
     def show(self, params, sel = 'x', **kwargs):
         '''
+        ### Description:
         This function makes a quick plot of internal signals.
 
         ### input variables:
@@ -405,17 +395,20 @@ class nonlinear():
         # use some varargins which are explained in 'scope' class
         if sel == 'x':
             signal   = self.states[:, 0:self.numSteps]
-            nSignals = self.numStates
+            nSignals = self.__class__.numStates
         elif sel == 'y':
             signal   = self.outputs[:, 0:self.numSteps]
-            nSignals = self.numOutputs
+            nSignals = self.__class__.numOutputs
         elif sel == 'u':
             signal   = self.inputs[:, 0:self.numSteps]
-            nSignals = self.numInputs
+            nSignals = self.__class__.numInputs
         # Make a scope
-        scp = scope(self.timeLine, nSignals, signal)
+        scp = scope(self.timeLine, nSignals, initial=signal)
 
-        scp.show(params, title=self.block.name, **kwargs)
+        scp.show(params, title=self.__class__.name, **kwargs)
     # The end of the function
+    
+    def __repr__(self):
+        return f"** {self.__class__.__name__} **\nCurrent point: {self.currentStep}/{self.numSteps}\nSolver Type: '{self.solverType}'"
 # The end of the class
 

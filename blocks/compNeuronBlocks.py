@@ -11,7 +11,7 @@ from core.caller.dyEngine import *
 
 class izhikevich(nonlinearGroup):
     '''
-    ## Izhikevich neuron model
+    ### Izhikevich neuron model
     '''
     
     # This name will be showed as its plot titles
@@ -21,7 +21,7 @@ class izhikevich(nonlinearGroup):
     numOutputs        = 1          # The number of outputs
     numSynapsesSignal = 1          # The number of synapses signals
     timeType          = 'c'        # 'c' -> Continuous, 'd' -> Discrete
-    solverType        = 'euler'    # 'Euler', 'Runge'
+    solverType        = 'euler'    # 'euler', 'runge'
     initialStates     = [-60, -12] # Initial value of states
     
     # Other variables (use 'mp_' before all of them)
@@ -85,7 +85,7 @@ class izhikevich(nonlinearGroup):
 
 class ullah(nonlinearGroup):
     '''
-    ## Ullah astrocyte model
+    ### Ullah astrocyte model
     '''
     
     # This name will be showed as its plot titles
