@@ -6,7 +6,7 @@
 ## // --------------------------------------------------------------
 
 # Import initial classes
-from core.lib.pyRequirment import *
+from core.lib.pyRequirement import *
 from core.lib.coreLib  import solverCore
 from core.caller.scopeEngine import scope
 
@@ -115,7 +115,6 @@ class ltiGroup():
         # and programming for other parts of the code
         self.states  = x + xNoise
         self.outputs = y + yNoise
-        self.currentStep += 1
     
     def __repr__(self):
         return f"** {self.__class__.__name__} **\nNumber of elements: {self.numberLTIs}"
@@ -137,15 +136,15 @@ class nonlinearGroup(solverCore):
         * `initial` denotes the initial condition of the system
         * `replicate` is the number of blocks; default is `1`
         * `delay` cannotes the input delay in step scale; e.g., `10` steps
-        * `Pre` indicates a vector including node IDs which are connected to `Post`s; e.g., `[1,1,2,3]`
-        * `Post` represents a vector containing Posterior; e.g., `[3,2,3,2]`
+        * `pre` indicates a vector including node IDs which are connected to `post`s; e.g., `[1,1,2,3]`
+        * `post` represents a vector containing Posterior; e.g., `[3,2,3,2]`
         * `solver` cannotes to set the solver type; e.g., `euler`, `rng4`, etc.
         '''
         initialcondition = [0]
         timedelay        = 0
         self.__enSyn       = False
-        Pre              = np.array(0)
-        Post             = np.array(0)
+        pre              = np.array(0)
+        post             = np.array(0)
         nNeurons         = 1
         solverType       = self.__class__.solverType
         for key, val in kwargs.items():
@@ -156,15 +155,17 @@ class nonlinearGroup(solverCore):
             # 'replicate' denotes the number of blocks
             if key == 'replicate': nNeurons = val
             # 'Pre' denotes the pre numbers
-            if key == 'Pre': Pre = val, self.__enSyn = True
+            if key == 'pre':
+                pre = val
+                self.__enSyn = True
             # 'Post' denotes the post numbers
-            if key == 'Post': Post = val
+            if key == 'post': post = val
             #  Dynamic solver type
             if key == 'solver': solverType = val
 
         self.delay          = timedelay   # The input signals over the time
-        self.Pre            = Pre         # Pre
-        self.Post           = Post        # Post
+        self.pre            = pre         # Pre
+        self.post           = post        # Post
         self.sampleTime     = sampletime  # The simulation sample-time
         self.numberNeurons  = nNeurons    # The number of neurons (Network size)
         self.solverType     = solverType  # The type of dynamic solver
@@ -237,7 +238,7 @@ class nonlinearGroup(solverCore):
         # Inter connections and synapses' currents are calculated here
         if self.__enSyn == True:
             if outInput == False: outInput = self.inputs[:,:,-1]*0
-            self.synapseCurrent = self.__class__._synapses(self.__class__, x, outInput, self.Pre, self.Post)
+            self.synapseCurrent = self.__class__._synapses(self.__class__, x, outInput, self.pre, self.post)
         
         # Updating internal signals
         self.states  = x + xNoise
@@ -501,7 +502,7 @@ class nonlinear(solverCore):
         
         ## Solving sigma points, STEP 2
         # Calculating sqrt
-        dSigma = math.sqrt(self.nUKF + self.lambd)*((np.linalg.cholesky(Pm)).transpose())
+        dSigma = np.sqrt(self.nUKF + self.lambd)*((np.linalg.cholesky(Pm)).transpose())
         # Putting 'xm' is some column (copy)
         xmCopy = xm[:, np.int8(np.zeros([1, np.size(xm)]).flatten())]
         # Obtaining sigma points

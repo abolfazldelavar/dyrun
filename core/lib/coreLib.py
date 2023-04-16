@@ -6,7 +6,7 @@
 ## // --------------------------------------------------------------
 
 # Loading the requirements
-from core.lib.pyRequirment import *
+from core.lib.pyRequirement import *
 
 class clib():
     '''
@@ -201,13 +201,13 @@ class clib():
             return tLine*0
         elif params.referaddtype == 'square':
             freq    = params.referaddfreq/params.tout
-            return np.sign(np.sin(2*math.pi*freq*tLine + 1e-20)) * params.referaddamp
+            return np.sign(np.sin(2*np.pi*freq*tLine + 1e-20)) * params.referaddamp
         elif params.referaddtype == 'onoff':
             freq    = params.referaddfreq/params.tout
-            return (2 - np.sign(np.sin(2*math.pi*freq*tLine + 1e-20)) - 1)/2 * params.referaddamp
+            return (2 - np.sign(np.sin(2*np.pi*freq*tLine + 1e-20)) - 1)/2 * params.referaddamp
         elif params.referaddtype == 'sin':
             freq    = params.referaddfreq/params.tout
-            return  np.sin(2*math.pi*freq*tLine) * params.referaddamp
+            return  np.sin(2*np.pi*freq*tLine) * params.referaddamp
 
            
     ## Making a signal of an exponential inverse

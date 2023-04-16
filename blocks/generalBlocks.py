@@ -6,7 +6,7 @@
 ## // --------------------------------------------------------------
 
 # Import initialize classes
-from core.lib.pyRequirment import *
+from core.lib.pyRequirement import *
 from core.caller.dyEngine import *
 
 class quadrupleTank(nonlinear):
