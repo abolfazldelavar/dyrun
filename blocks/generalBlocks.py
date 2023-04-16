@@ -132,8 +132,8 @@ class quadrupleTank(nonlinear):
         # M matrix, d(h(t))/dv(t), Measurement Noise effects
         M = np.eye(2)
         return A, L, H, M
-    # The end of the function
-# The end of the class
+    # End of function
+# End of class
 
 
 class lorenz(nonlinear):
@@ -224,6 +224,6 @@ class lorenz(nonlinear):
         # M matrix, d(h(t))/dv(t), Measurement Noise effects
         M = np.eye(2)
         return A, L, H, M
-    # The end of the function
-# The end of the class
+    # End of function
+# End of class
 

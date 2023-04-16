@@ -34,6 +34,27 @@ import os
 # import shutil
 
 # %% *NECESSARY*
+# The `copy` module is also part of the Python standard library,
+# but it serves a different purpose than the `shutil and `os` modules.
+# While `shutil` and `os` provide functions for interacting with
+# the operating system and performing file operations, the `copy` module
+# provides functions for creating copies of objects.
+
+# The `copy` module provides two functions: `copy.copy()` and `copy.deepcopy()`.
+# The `copy.copy()` function creates a shallow copy of an object, meaning that
+# it creates a new object with the same contents as the original object,
+# but any changes made to the new object will not affect the original object.
+# The `copy.deepcopy()` function creates a deep copy of an object, meaning that it
+# recursively copies all objects and data structures referenced by the original object.
+
+# In summary, while the `shutil`, `os`, and `copy` modules are all part of the
+# Python standard library, they serve different purposes. The `shutil` and `os` modules
+# provide functions for interacting with the operating system and performing file operations,
+# while the `copy` module provides functions for creating copies of objects.
+
+import copy as cop
+
+# %% *NECESSARY*
 # The control package is a third-party Python library for control systems engineering
 from control.matlab import *
 from control import *

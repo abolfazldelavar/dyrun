@@ -104,28 +104,28 @@ class scope():
     # The below function is used to plot the internal signals
     def show(self, params, **kwargs):
         '''
+        ### Overview:
         This function makes a quick plot of internal signals.
 
         ### input variables:
         * `params`
 
         ### Options:
-            * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
-            * `derive` is used to get derivatives of signals, which can be used in different forms:
-                * `derive=False` or `derive=True`; default is `False`,
-                * `derive=[1,1,0]` is used to get derivatives of selected signals. Ones you want to get derivative must be `1` or `True`.
-            * `notime` is used to remove time and illustrate timeless plots. it can be set differently:
-                * `notime=[0,1]` or `notime=[0,1,2]` is utilized to depict signals 2D or 3D. Note that the numbers are signal indices,
-                * `notime=[[0,1], [1,2]]` or `notime=[[0,1,2], [3,0,1]]` is utilized to depict different signal groups 2D or 3D. Note that the numbers are signal indices.
-            * `save` denotes to the name of the file which the plot will be saved with. it could be `image.png/pdf/jpg` or `True`.
-            * `xlabel`, `ylabel`, and `zlabel` are the x, y, and z title of the illustration.
-            * `title` cannotes the title of the figure.
-            * `legend' is used for legend issue:
-                * `legent=True` and `legent=False`, enables and disables the legent,
-                * `legent='title'` enables the legend with imported title.
-            * `lineWidth` can set the line width.
-            * `grid` can enables the grid of the illustration - `True` or `False`.
-            * `legCol` can control the column number of the legend and must be a positive integer.
+            * `select` - choose signals arbitrarily; e.g., `select=[0,2,6]`
+            * `derive` - get derivatives of signals; can be used in different ways:
+                * `derive=False` or `derive=True`; default is `False`
+                * `derive=[1,1,0]` - get derivatives of selected signals; set to `1` or `True` for signals you want to derive
+            * `notime` - remove time and create timeless plots; can be set in different ways:
+                * `notime=[0,1]` or `notime=[0,1,2]` - create 2D or 3D plots of signals; numbers are signal indices
+                * `notime=[[0,1], [1,2]]` or `notime=[[0,1,2], [3,0,1]]` - create 2D or 3D plots of different signal groups; numbers are signal indices
+            * `save` - name of file to save plot as; can be `image.png/pdf/jpg` or `True` to choose automatically
+            * `xlabel`, `ylabel`, and `zlabel` - titles for x, y, and z axes of plot
+            * `legend` - control legend display:
+                * `legend=True` and `legend=False` - enable and disable legend
+                * `legend='title'` - enable legend with specified title
+            * `lineWidth` - set line width
+            * `grid` - enable grid on plot (`True` or `False`)
+            * `legCol` - control number of columns in legend (positive integer)
         '''
         # Get the input arguments
         select = -1
@@ -303,31 +303,32 @@ class scope():
 
         # Make it pretty + saving engine
         plib.isi(params, h, save=save)
-    # The end of the function
+    # End of function
 
     # The below function is used to plot a raster plot
     def raster(self, params, **kwargs):
         '''
-        To depict a raster plot of internal signals.
+        ### Overview:
+        This function creates a raster plot of internal signals.
 
         ### Input variables:
         * `params`
 
         ### Options:
-            * `select` is used to choose signals arbitrarily; e.g., `select=[0,2,6]`.
-            * `derive` is used to get derivatives of signals, which can be used in different forms:
-                * `derive=False` or `derive=True`; default is `False`,
-                * `derive=[1,1,0]` is used to get derivatives of selected signals. Ones you want to get derivative must be `1` or `True`.
-            * `save` denotes to the name of the file which the plot will be saved with. it could be `image.png/pdf/jpg` or `True`.
-            * `xlabel` and `ylabel` are the x and y titles of the illustration.
-            * `title` cannotes the title of the figure.
-            * `colorBar` is a boolean input (`True` or `False`) that can enable or disable the color bar.
-            * `colorLimit` can restrict the color bar values; e.g., `[0, 1]`.
-            * `barTicks` are used to change the ticks of the color bar.
-            * `cmap` can be set to alter the colors arbitrarily. Use `plib.linGradient()` or `plib.cmapMaker()` to make one, or use pre-made ones like `mpl.cm.RdGy` and 'mpl.cm.RdYlGn'.
-            * `hwRatio` denotes height to width ratio and is valued between 0 and 1; default is `0.68`
-            * `interpolation` is blurization and can be set with `none`, `nearest`, `bilinear`, or `bicubic`.
-            * `rasterized` is a boolean value (`True` or `False`) which can change vector graph elements into images that can redue the file size significantly.
+        * `select` - choose signals arbitrarily; e.g., `select=[0,2,6]`
+        * `derive` - get derivatives of signals; can be used in different ways:
+            * `derive=False` or `derive=True`; default is `False`
+            * `derive=[1,1,0]` - get derivatives of selected signals; set to `1` or `True` for signals you want to derive
+        * `save` - name of file to save plot as; can be `image.png/pdf/jpg` or `True`
+        * `xlabel` and `ylabel` - titles for x and y axes of plot
+        * `title` - title of figure
+        * `colorBar` - enable or disable color bar (`True` or `False`)
+        * `colorLimit` - restrict color bar values; e.g., `[0, 1]`
+        * `barTicks` - change ticks of color bar
+        * `cmap` - change colors arbitrarily; use pre-made ones like `mpl.cm.RdGy` and `mpl.cm.RdYlGn` or create your own with `plib.linGradient()` or `plib.cmapMaker()`
+        * `hwRatio` - height to width ratio; value between 0 and 1; default is `0.68`
+        * `interpolation` - blurization; can be set to `none`, `nearest`, `bilinear`, or `bicubic`
+        * `rasterized` - change vector graph elements into images (`True` or `False`) to reduce file size significantly
         '''
         # Get the input arguments
         select = np.arange(0, self.numSignals)
@@ -433,5 +434,5 @@ class scope():
         # Modify the Y ticks
         ax.set_yticks([0, imHeight], [str(select[0]), str(select[-1])])
         
-# The end of the class
+# End of class
 

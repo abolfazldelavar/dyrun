@@ -66,7 +66,7 @@ class izhikevich(nonlinearGroup):
             # After updating states
             x[0,:] = np.minimum(x[0,:], self.mp_neuron_fired_thr)
         return x
-    # The end of the function
+    # End of function
 
     ## Synapses between systems
     #  To have an internal static interaction between agents
@@ -80,7 +80,7 @@ class izhikevich(nonlinearGroup):
         for i in range(0, np.size(Pre)):
             Isyn[0, Post[i]] = Isyn[0, Post[i]] + Isync[0, i]
         return Isyn
-# The end of the class
+# End of class
 
 
 class ullah(nonlinearGroup):
@@ -159,7 +159,7 @@ class ullah(nonlinearGroup):
     def _limitations(self, x, mode):
         # Obj, States, Mode
         return x
-    # The end of the function
+    # End of function
 
     ## Synapses between systems
     #  To have an internal static interaction between agents
@@ -174,5 +174,5 @@ class ullah(nonlinearGroup):
         # for i in range(0, np.size(Pre)):  # The above code is much faster than this
         #     Deff[:, Pre[i]] = Deff[:, Pre[i]] + x[[0,2], Post[i]] - x[[0,2], Pre[i]]
         return Deff
-# The end of the class
+# End of class
 

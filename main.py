@@ -1,167 +1,168 @@
 # %% [markdown]
 # # FARYADELL SIMULATION FRAMEWORK
-# This package has been provided to simulate easily and quickly several useful tools that have been written to simulate `linear` and `nonlinear dynamic` systems, dependent or independent over time. If you are a student who whishes to investigate and has decided to seek dynamic and control systems, this is for you. Enjoy it.
-# 
-# * Creator:   Abolfazl Delavar
-# * Web:       https://github.com/abolfazldelavar
-# * Updated:   12 April 2023
+# The `Faryadell Simulation Framework` is a simple tool that facilitates simulations expeditiously and effortlessly, using invaluable instruments for modeling linear and nonlinear dynamic systems, irrespective of their time dependence or independence. This formidable instrument is capable of executing `Dynamic Mathematical Models` and is advantageous for control engineering applications, estimation, and prediction. Moreover, it is applicable to Machine Learning and AI domains, including neural networks. Researchers who wish to delve into the realm of dynamic and control systems will find this package to be an invaluable resource. Enjoy!
 # 
 # "*Successful people are those who can build solid foundations with the bricks others throw at them.*"
+#     
+#         Creator: Abolfazl Delavar
+#         Website: https://github.com/abolfazldelavar
+#         Last Updated:   16 April 2023
 
 # %% [markdown]
 # ## Requirements
-# All external **extensions** utilized in the project must be added in this section. To have comprehensive accessibility to libraries, if there is some you would like to add, you can put them as an object to have better control and management of your libraries. Furthermore, There are two libraries name `clib` and `plib` placed in `coreLib.py` in which there are several useful functions that could be used for drawing or other purposes.
+# All external **dependencies** utilized in the project should be documented in this section. To ensure comprehensive access to libraries, any additional libraries can be added as objects (using `struc()`) for improved control and management. Additionally, the `coreLib.py` file contains two libraries, `clib` and `plib`, which provide a variety of useful functions for tasks such as drawing.
 
 # %%
-# To enable plotting outside of this page in a separate window
+# To generate plots in an independent window outside this page
 # %matplotlib qt
 
-# Requirements
-from core.lib.pyRequirement  import *
-from core.lib.coreLib        import *
+# Dependencies
+from core.lib.pyRequirement import *
+from core.lib.coreLib import *
 
 # %% [markdown]
-# ## Specialized functions
-# As long as there is any specific function that you have to define, here is the best place to reach this aim. This section is considered as a pre-defined function step that could be available to use in the whole project.
+# ## Custom Functions
+# If you need to define any custom functions for your project, this is the ideal location to do so. This section serves as a repository for pre-defined functions that can be accessed and utilized throughout the entire project.
 
 # %%
 def test():
     '''
-    DocString `is` a text to help using the difined funtions.
+    DocString `is` a text to help using this function.
     '''
     pass
 
 # %% [markdown]
-# ## Valuation
-# This section provides the privilege to define **constant** values, which are usually used with a unique value in the whole project. Note that, they must be defined as a part of the `params` variable, which is a *list*.
+# ## Parameters
+# This segment confers the prerogative to establish **invariable** quantities, typically employed with a singular value throughout the entire project. It is imperative to note that they must be delineated as a component of the `params` variable, which constitutes a `struct` collection.
 
 # %%
-params = clib.struct()
-# The below variables are time-step and simulation time, respectively.
-# You might need to alter them arbitrarily.
+params = struct()
+
+# Set the time-step and simulation time as needed.
+# Note: These variables may need to be changed arbitrarily.
 params.step = 0.0001 #(double)
 params.tOut = 6      #(double)
 
-# The given line below is a dependent variable. You normally
-# should NOT change it.
+# Calculate the number of steps required for the simulation.
+# Note: This variable is dependent on the time-step and simulation time, and should not be changed.
 params.n = int(params.tOut/params.step) #(DEPENDENT)
 
-# The two next variables carry the folders from which you can use to
-# call your files and saving the results organizely.
+# Specify the folders for input data, output data, and logs.
 params.dataPath = 'data'
 params.loadPath = params.dataPath + '/inputs'  #(string)
 params.savePath = params.dataPath + '/outputs' #(string)
 
-# Do you want to save a diary after each simulation? So set the below logical
-# variable "True". The below directory is the place your logs are saved.
-# The third order is a string that carries the name of the file, and normally
-# is created using the current time, but you can change it arbitrary.
+# Determine whether to save a diary after each simulation and specify the directory and name of the diary file.
+# Note: The diary file name is normally created using the current time, but can be changed arbitrarily.
 params.makeDiary = True   #(logical)
 params.diaryDir  = 'logs' #(string)
 params.diaryFile = clib.getNow(1, '-') #(string)
 
-# The amount of time (in second) between each commands printed on CP.
+# Set the amount of time (in seconds) between each string printed on the command prompt.
 params.commandIntervalSpan = 2 #(int)
 
-# The below line is related to creating names when you are saving data
-# which include the time of saving, It is a logical variable.
+# Determine whether to save data with a unique name based on the time of saving.
 params.uniqueSave = False #(logical)
 
-# The below string can be set like one of the following formats. It's the
-# default format that when you do not adjust any formats, it will be
-# considered. These allowed formats are "jpg", "png", "pdf"
+# Specify the default image format for saving.
+# Note: Allowed formats are "jpg", "png", and "pdf".
 params.defaultImageFormat = 'png' #(string)
-# Put your params here ~~~>
+
+# Add any additional parameters as needed ~~~>
 
 # %% [markdown]
 # ## Signals
-# Any signals and array variables should be defined in this section. Also, scope objects which are effective to observe a signal, should be defined here. All your signals must be a part of `signals` variable.
+# This section is designated for the definition of any signals and array variables. Additionally, `scope` objects that are instrumental in observing a signal should be defined herein. It is imperative that all your signals are incorporated as a component of the `signals` variable.
 
 # %%
-signals = clib.struct()
-# Simulation time vector
+signals = struct()
+
+# Generate a time vector for the simulation using the specified time-step and simulation time.
 signals.tLine = np.arange(0, params.tOut, params.step)
-# Put your signals here ~~~>
+
+# Insert signal data here ~~~>
 
 # %% [markdown]
 # ## Models
-# Any dynamic objects and those which are not as simple as an array must be defined as a part of `models` variable; Objects such as estimators and controllers.
+# Dynamic objects and those that are not as elementary as an array must be delineated as a component of the `models` variable. This includes objects such as estimators and controllers.
 
 # %%
-models = clib.struct()
-# Put your models here ~~~>
+models = struct()
+
+# Add your desired models to the struct ~~~>
 
 # %% [markdown]
 # ## Simulation
-# The key function of the project, undoubtedly, can be mentioned is `simulation` sunction which is given below. In this part, regarding the availability of all variables (`params`, `signals`, `models`, and `lib`) you are able to code your main purpose of this project here. Note that there is a loop named `Main loop` which you can utilize to use as time step loop, although you might not need to use that in many projects.
+# The principal function of the project, indubitably, can be identified as the `simulation` function delineated below. In this segment, given the accessibility of all variables (`params`, `signals`, and `models`), you possess the capability to code the primary objective of this project herein. It is imperative to note that there exists a loop entitled `Main loop`, which can be employed as a time step loop, albeit its utilization may not be requisite in numerous projects.
 
 # %%
 def simulation(params, signals, models):
-    # [Parameters, Models, Signals, Libraries] <- (Parameters, Signals, Models, Libraries)
-    # This function is your main code which there is a time-loop in
-    # Also, the model blocks and the signals must be updated here.
-    # Before the main loop, you can initialize if you need, Also you can
-    # finalize after that if you need, as well.
+    # This function is the main code for your simulation, containing a time-loop and utilizing model blocks and signals.
+    # The order of the input parameters should be (Parameters, Signals, Models).
+    # You can initialize before the main loop and finalize after it if needed.
     
     ## Initial options
-    func = clib()
+    # Call the sayStart method from clib class with params as input and assign it to st variable
     st   = clib.sayStart(params)
-    # A trigger used to report steps in command
+    # Create a trigger to report steps in command
     trig = [st, params.commandIntervalSpan, -1]
     
     ## Main loop
     for k in range(0, params.n):
-        # Displaying the iteration number on the command window
+        # Display the iteration number on the command window using disit method from clib class
         trig = clib.disit(k, params.n, trig, params)
 
         # Put your codes here ~~~>
 
     ## Finalize options
-    # To report the simulation time after running has finished
+    # Report the simulation time after running has finished
     clib.disit(k, params.n, [st, 0, trig[2]], params)
+    # Call the sayEnd method from clib class
     clib.sayEnd(st, params)
-    # Sent to output
+    # Return the output as a list of params, signals, models
     return [params, signals, models]
 
 # %% [markdown]
-# ## Running
-# To run the project, the below piece of code is provided. In simple projects, you might need to run once, while there are numerous ones that you will have to run the simulation for several times; to do that, you can use loops and other arbitrary techniques to call `simulation` which might be given changed inputs such as `params`, etc.
+# ## Execution
+# To run the project, the subsequent code snippet is furnished. In elementary projects, a single execution may suffice, whereas, in more intricate ones, multiple simulations may be necessitated. To accomplish this, loops and other discretionary techniques can be employed to invoke the `simulation` function with altered inputs such as `params`, etc.
 
 # %%
 [params, signals, models] = simulation(params, signals, models)
 
 # %% [markdown]
-# ### Profiling
-# If you need to check the timing of your project and know which part of your program is the most time-consuming, uncomment the content in this section and observe your performance of coding. It is worth mentioning that the previous code block should be commented.
+# ### Analysis
+# Should you necessitate an evaluation of your project’s timing and an identification of the most time-intensive segments of your program, you may uncomment the contents of this section and scrutinize your coding performance. It is pertinent to note that the preceding code block should be commented.
 # 
-# If you want to use it in `Command Prompt`, run the below codes to create and show the results.
+# To utilize this feature in `Command Prompt`, execute the subsequent commands to generate and display the results:
 # * `python -m cProfile -o logs\profiler\cprofiler.prof main.py`
 # * `snakeviz logs\profiler\cprofiler.prof`
 
 # %%
-# # Running the code and save the results into a file
-# order = 'simulation(params, signals, models, lib)'
-# profileName = params.diaryDir + '/profiler/' + params.diaryFile + '.prof'
-# cProfile.run(order, profileName)
-# # Depiction of the results 
-# %load_ext snakeviz
-# %snakeviz profileName
+# # Run the simulation and save the results into a file
+# simulationorder = 'simulation(params, signals, models, lib)'
+# profilename = params.diaryDir + '/profiler/' + params.diaryFile + '.prof'
+# cProfile.run(simulationorder, profilename)
+
+# # Visualize the profiling results using snakeviz
+# %loadext snakeviz
+# %snakeviz profilename
 
 # %% [markdown]
 # ## Illustration
-# If you need to demonsrate the results obtained, this section can be utilized to have better organization.
+# Should you necessitate the exhibition of the results procured, this section can be employed to facilitate superior organization.
 
 # %%
-## Initialize
-n     = params.n
-nn    = np.arange(0, n)   # A vector from 1 to n
-tLine = signals.tLine[nn] # A time-line vector
-plib.initialize()
+## Initialize the variables and parameters
+n = params.n                # number of elements
+nn = np.arange(0, n)        # create a vector from 0 to n-1
+tLine = signals.tLine[nn]   # create a time-line vector with length n
+plib.initialize()           # initialize the library
+
 ## Write your codes here ~~~>
 
 # %% [markdown]
-# ## Saving
-# Use the below part, providing to save data.
+# ## Preservation
+# Utilize the subsequent section to store data.
 
 # %%
 ## Write your codes here ~~~>

@@ -8,18 +8,261 @@
 # Loading the requirements
 from core.lib.pyRequirement import *
 
+# %% Structure class
+class struct(dict):
+    '''
+    ## C/C++ or MATLAB-like structures
+    A simple and easy-to-use MATLAB-like structure type for Python.
+
+    ## Sample Usage
+    The structure is defined by `struct` class.
+        ```
+        p = struct()
+        p.x = 3
+        p.y = 4
+        p.A = p.x * p.y
+        print(p)
+        ```
+    The output will be:
+        ```
+        struct({'x': 3, 'y': 4, 'A': 12})
+        ```
+    Here, an instance of `struct` is created and then fields `x` and `y` are defined. Then, a new field `A` is added to the structure. Finally, the string representation of the `struct` is printed.
+
+    In the previous code, you can simply use the following method to create and initialize the structure.
+        ```
+        p = struct(x=3, y=4)
+        p.A = p.x * p.y
+        ```
+
+    ## Dictionary Vs Structure
+    Actually `struct` is a subclass of built-in dictionary type `dict`, and it can be converted to or created from `dict` objects.
+
+    You can convert `dict` objects to `struct` as follows:
+        ```
+        my_dict = {'x':3, 'y':4}
+        p = struct(my_dict)
+        ```
+    Also, `struct` object can be converted to `dict` as well:
+        ```
+        p = struct(x=3, y=4)
+        p.z = 12
+        my_dict = dict(p)
+        print(my_dict)
+        ```
+    The output will be this:
+        ```
+        {'x': 3, 'y': 4, 'z': 12}
+        ```
+
+    ## Merging Structures
+    It is possible to merge two `struct` objects. For example let's define two structures as:
+        ```
+        a = struct(x=1, y=2, z=3)
+        b = struct(y=5, t=20, u=30)
+        ```
+    We can merge these structure using `+` operator:
+        ```
+        c = a + b
+        print(c)
+        ```
+    The output will be:
+        ```
+        struct({'x': 1, 'y': 5, 'z': 3, 't': 20, 'u': 30})
+        ```
+
+    ## List of the Methods
+    In this part, we are going to discuss the methods implemented and available in
+    `struct` class. You can use these methods with any instance of `struct` class.
+    Additionally, because the `struct` class is a subclass of `dict`, all of the
+    methods defined in the `dict` class are available too.
+
+    ### Fields Method
+    The `fields()` method returns a `list` of fields defined in structure. An example usage follows:
+        ```
+        p = struct(x=3, y=4)
+        print(p.fields())
+        ```
+    The output will be:
+        ```
+        ['x', 'y']
+        ```
+
+    ### Add Field Method
+    A new field can be added using `add_field()` method. This method accepts two input arguments:
+    field name and its value. The value is optional and if it is ignored,
+    then value is assumed to be `None`. A sample code follows:
+        ```
+        p = struct(x=3, y=4)
+        p.add_field('z', 12)
+        p.add_field('L')
+        print(p)
+        ```
+    The output of this code will be:
+        ```
+        struct({'x': 3, 'y': 4, 'z': 12, 'L': None})
+        ```
+    Instead of using the `add_field()` method, it is possible to use `.` and `=` operators.
+    For example, the above-mentioned code can be simplified as this:
+        ```
+        p = struct(x=3, y=4)
+        p.z = 12
+        p.L = None
+        print(p)
+        ```
+    The result will be the same.
+
+    ### Remove Field Method
+    A field can be removed from a `struct` object using `remove_field()` method.
+    This method gets a field name and it removes (deletes) the specified field.
+    An example is given below:
+        ```
+        p = struct(x=3, y=4, z=12)
+        print('Before remove_field: {}'.format(p))
+        p.remove_field('z')
+        print('After remove_field: {}'.format(p))
+        ```
+    The output will be this:
+        ```
+        Before remove_field: struct({'x': 3, 'y': 4, 'z': 12})
+        After remove_field: struct({'x': 3, 'y': 4})
+        ```
+
+    ### Repeat Method
+    Sometimes we need to repeat/replicate a structure. For example, assume that
+    we are going to implement an Evolutionary Algorithm and we defined the
+    individualsas `struct` objects. First we need to create a template:
+        ```
+        empty_individual = struct(pos=None, fval=None)
+        ```
+    Then we can initialize the population array using following code:
+        ```
+        pop_size = 10
+        pop = empty_individual.repeat(pop_size)
+        ```
+    This code uses the `repeat()` method to initialize a list of distinct
+    `struct` objects with the same data fields. Instead of using `repeat()` method,
+    simply we can use `*` operator to perform replication:
+        ```
+        pop = empty_individual * pop_size
+        ```
+
+    ### Copy and Deep-copy Methods
+    The `struct` is a reference type. To have a copy of a `struct` object,
+    you cannot simply use assignment operator. To create copies of structure objects,
+    two methods are implemented in `struct` class: `copy()` and `deepcopy()`.
+    The first one gives us a shallow copy of the `struct` object.But using `deepcopy()`,
+    as the name of the method says, we can create deep copies of structure objects.
+
+    ## Copy Right
+    This class is developed by Mostapha Kalami Heris.
+    Web page: https://github.com/smkalami/ypstruct
+    '''
+    def __repr__(self):
+        """
+        String representation of the struct
+        """
+        return "struct({})".format(super().__repr__())
+
+    def __getattr__(self, field):
+        """
+        Gets value of a field
+        """
+        if field not in dir(self):
+            if field in self.keys():
+                return self[field]
+            else:
+                return None
+        else:
+            return None
+    
+    def __setattr__(self, field, value):
+        """
+        Sets value of a field
+        """
+        if field not in dir(self):
+            self[field] = value
+        else:
+            return super().__setattr__(field, value)
+    
+    def fields(self):
+        """
+        Gets the list of defined fields of the struct
+        """
+        return list(self.keys())
+
+    def remove_field(self, field):
+        """
+        Removes a field from the struct
+        """
+        if field in self.keys():
+            del self[field]
+    
+    def add_field(self, field, value = None):
+        """
+        Adds a new field to the struct
+        """
+        if field not in self.keys():
+            self[field] = value
+
+    def copy(self):
+        """
+        Creates a shallow copy of the struct
+        """
+        self_copy = struct()
+        for field in self.keys():
+            if isinstance(self[field], struct):
+                self_copy[field] = self[field].copy()
+            else:
+                self_copy[field] = cop.copy(self[field])
+        
+        return self_copy
+
+    def deepcopy(self):
+        """
+        Creates a deep copy of the struct
+        """
+        self_copy = struct()
+        for field in self.keys():
+            if isinstance(self[field], struct):
+                self_copy[field] = self[field].deepcopy()
+            else:
+                self_copy[field] = cop.deepcopy(self[field])
+        
+        return self_copy
+
+    def repeat(self, n):
+        """
+        Repeats/replicates the struct to create an array of structs (e.g. for initialization)
+        """
+        return [self.deepcopy() for i in range(n)]
+    
+    def __mul__(self, n):
+        """
+        Overload * operator (multiplication) to repeat/replicate the struct
+        """
+        if not isinstance(n, int) and not isinstance(n, float):
+            raise TypeError("Only integers are allowed.")
+        return self.repeat(n)
+    
+    def __add__(self, other):
+        """
+        Overload + operator (addition) to merge two struct objects
+        """
+        if not isinstance(other, dict):
+            raise TypeError("Only structure and dict objects are allowed.")
+        result = self.deepcopy()
+        result.update(other)
+        return result
+# End of class
+
+# %% internal effective functions
 class clib():
     '''
     ### Description:
     This library provides you several practical functions that some of them are essential for the framework, 
     and others might be useful for other purposes.
     '''
-
-    @staticmethod
-    # Empty structure
-    class struct():
-        def __init__(self):
-            pass
 
     # The below function print a comment periodically
     @staticmethod
@@ -274,8 +517,9 @@ class clib():
         output    = 2*((x - w1)/(v1 - w1)) - 1
         output    = (output + 1)*(v2 - w2)/2 + w2
         return output
-# The end of the class
+# End of class
 
+# %% Numerical calculations
 class solverCore():
     '''
     ### Description:
@@ -319,7 +563,7 @@ class solverCore():
             raise ValueError('The solver name is not correct, please change the word "' + solverType + '"')
         return xn
 
-
+# %% Illustration functions
 class plib():
     '''
     ### Description:
@@ -435,13 +679,13 @@ class plib():
 
                 # The view of camera (degree)
                 ax.view_init(20, -40)
-        # The end of the loop
+        # End of loop
 
         # Saving the graph, if it is under demand.
         # User must import the figure name as 'save' var
         if not save==False:
             plib.figureSaveCore(params, save, fig)
-    # The end of the function
+    # End of function
 
     @staticmethod
     def figureSaveCore(params, save = True, fig = plt.gcf(), dpi = 300):
@@ -535,7 +779,7 @@ class plib():
             fig.savefig(fullName, transparent=True, dpi=dpi)
         # Print the result of saving
         print('The graph named "' + fName + '.' + fFormat + '" has been saved into "' + fDir + '".')
-    # The end of the function
+    # End of function
 
     @staticmethod
     def linGradient(colors, locs, num = 256, showIt=False):
@@ -610,7 +854,7 @@ class plib():
         '''
         cmap = mpl.colors.LinearSegmentedColormap.from_list(Name, Colors, N)
         return cmap
-# The end of the class
+# End of class
         
         
 #         function dark(obj, varargin)
