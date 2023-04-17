@@ -6,7 +6,6 @@
 #     
 #         Creator: Abolfazl Delavar
 #         Website: https://github.com/abolfazldelavar
-#         Last Updated:   16 April 2023
 
 # %% [markdown]
 # ## Requirements
@@ -72,7 +71,7 @@ params.defaultImageFormat = 'png' #(string)
 
 # %% [markdown]
 # ## Signals
-# This section is designated for the definition of any signals and array variables. Additionally, `scope` objects that are instrumental in observing a signal should be defined herein. It is imperative that all your signals are incorporated as a component of the `signals` variable.
+# This section is designated for the definition of any signals and array variables.
 
 # %%
 signals = struct()
@@ -92,7 +91,15 @@ models = struct()
 # Add your desired models to the struct ~~~>
 
 # %% [markdown]
-# ## Simulation
+# ## Main
+# ### Oscilloscope set up
+# Firstly, `scope` objects that are instrumental in observing signals should be defined herein.
+
+# %%
+# Insert signal trackers here ~~~>
+
+# %% [markdown]
+# ### Simulation
 # The principal function of the project, indubitably, can be identified as the `simulation` function delineated below. In this segment, given the accessibility of all variables (`params`, `signals`, and `models`), you possess the capability to code the primary objective of this project herein. It is imperative to note that there exists a loop entitled `Main loop`, which can be employed as a time step loop, albeit its utilization may not be requisite in numerous projects.
 
 # %%
