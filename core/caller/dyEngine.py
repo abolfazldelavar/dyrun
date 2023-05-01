@@ -141,11 +141,11 @@ class nonlinearGroup(solverCore):
         '''
         initialcondition = [0]
         timedelay        = 0
-        self.__enSyn       = False
+        self.__enSyn     = False
         pre              = np.array(0)
         post             = np.array(0)
         nNeurons         = 1
-        solverType       = self.__class__.solverType
+        solverType       = self.solverType
         for key, val in kwargs.items():
             # 'initial' specifies the initial condition of the system
             if key == 'initial': initialcondition = val
@@ -168,24 +168,23 @@ class nonlinearGroup(solverCore):
         self.sampleTime     = sampletime  # The simulation sample time
         self.numberNeurons  = nNeurons    # The number of neurons (Network size)
         self.solverType     = solverType  # The type of dynamic solver
-        self.initialStates  = self.__class__.initialStates
         self.initialStates  = np.reshape(self.initialStates, [np.size(self.initialStates), 1])
-        self.synapseCurrent = np.zeros([self.__class__.numSynapsesSignal, self.numberNeurons])
-        self.inputs         = np.zeros([self.__class__.numInputs,  self.numberNeurons, self.delay + 1])
-        self.outputs        = np.zeros([self.__class__.numOutputs, self.numberNeurons])
-        self.states         = np.ones([self.__class__.numStates,  self.numberNeurons])
+        self.synapseCurrent = np.zeros([self.numSynapsesSignal, self.numberNeurons])
+        self.inputs         = np.zeros([self.numInputs,  self.numberNeurons, self.delay + 1])
+        self.outputs        = np.zeros([self.numOutputs, self.numberNeurons])
+        self.states         = np.ones([self.numStates,  self.numberNeurons])
         self.states         = self.initialStates*self.states
         
         # If the initial input does not exist, set it to zero. Otherwise, put the initial condition in the state matrix.
         initialcondition = np.array(initialcondition)
         iniSh = initialcondition.shape
-        if sum(iniSh) == self.__class__.numStates or sum(iniSh) == self.__class__.numStates + 1:
+        if sum(iniSh) == self.numStates or sum(iniSh) == self.numStates + 1:
             # If the imported initial value is not a column vector, reshape it.
             initialcondition = np.reshape(initialcondition, [np.size(initialcondition), 1])
             self.states += 1
             self.states  = initialcondition*self.states
         elif sum(iniSh) != 1 and sum(iniSh) != 2:
-            if iniSh == (self.__class__.numStates, self.numberNeurons):
+            if iniSh == (self.numStates, self.numberNeurons):
                 self.states = initialcondition
             else:
                 raise ValueError("The dimensions of the inserted initial value are incorrect. Please check it.")
@@ -207,10 +206,10 @@ class nonlinearGroup(solverCore):
         systemInput = self.inputs[:,:,0]
 
         # Applies limitations to the states before calculating the next states using the system dynamics
-        x = self.__class__._limitations(self.__class__, self.states, 0)
+        x = self._limitations(self.states, 0)
         
         # Defines a handle function for calculating the system dynamics
-        handleDyn = lambda xx: self.__class__._dynamics(self.__class__, xx, systemInput, self.synapseCurrent)
+        handleDyn = lambda xx: self._dynamics(xx, systemInput, self.synapseCurrent)
         
         # Calculates the states and outputs using the system dynamics
         if self.__class__.timeType == 'c':
@@ -222,15 +221,15 @@ class nonlinearGroup(solverCore):
             x = handleDyn(x)
         
         # Enforces restrictions on the states after computing the next states using the system dynamics
-        x = self.__class__._limitations(self.__class__, x, 1)
+        x = self._limitations(x, 1)
         
         # Computes the system output using the measurement dynamics specified in the model file or other relevant files
-        y = self.__class__._measurements(self.__class__, x, u, self.solverType)
+        y = self._measurements(x, u, self.solverType)
 
         # Calculates interconnections and currents of synapses here
         if self.__enSyn == True:
             if outInput == False: outInput = self.inputs[:,:,-1]*0
-            self.synapseCurrent = self.__class__._synapses(self.__class__, x, outInput, self.pre, self.post)
+            self.synapseCurrent = self._synapses(x, outInput, self.pre, self.post)
         
         # Updates internal signals
         self.states  = x + xNoise

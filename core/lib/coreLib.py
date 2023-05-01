@@ -9,7 +9,7 @@
 from core.lib.pyRequirement import *
 
 # %% Structure class
-class struct(dict):
+class structure(dict):
     '''
     ## C/C++ or MATLAB-like structures
     A simple and easy-to-use MATLAB-like structure type for Python.
