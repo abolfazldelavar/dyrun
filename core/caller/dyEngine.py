@@ -81,7 +81,7 @@ class ltiGroup():
         iniSh = initialcondition.shape
         if sum(iniSh) == self.numStates or sum(iniSh) == self.numStates + 1:
             # If the imported initial value is not a column vector, reshape it.
-            initialcondition = np.reshape(initialcondition, [np.size(initialcondition), 1])
+            initialcondition = np.reshape(initialcondition, (-1, 1))
             self.states += 1
             self.states  = initialcondition*self.states
         elif initialcondition.size != 1:
@@ -168,7 +168,7 @@ class nonlinearGroup(solverCore):
         self.sampleTime     = sampletime  # The simulation sample time
         self.numberNeurons  = nNeurons    # The number of neurons (Network size)
         self.solverType     = solverType  # The type of dynamic solver
-        self.initialStates  = np.reshape(self.initialStates, [np.size(self.initialStates), 1])
+        self.initialStates  = np.reshape(self.initialStates, (-1, 1))
         self.synapseCurrent = np.zeros([self.numSynapsesSignal, self.numberNeurons])
         self.inputs         = np.zeros([self.numInputs,  self.numberNeurons, self.delay + 1])
         self.outputs        = np.zeros([self.numOutputs, self.numberNeurons])
@@ -180,7 +180,7 @@ class nonlinearGroup(solverCore):
         iniSh = initialcondition.shape
         if sum(iniSh) == self.numStates or sum(iniSh) == self.numStates + 1:
             # If the imported initial value is not a column vector, reshape it.
-            initialcondition = np.reshape(initialcondition, [np.size(initialcondition), 1])
+            initialcondition = np.reshape(initialcondition, (-1, 1))
             self.states += 1
             self.states  = initialcondition*self.states
         elif sum(iniSh) != 1 and sum(iniSh) != 2:
@@ -224,7 +224,7 @@ class nonlinearGroup(solverCore):
         x = self._limitations(x, 1)
         
         # Computes the system output using the measurement dynamics specified in the model file or other relevant files
-        y = self._measurements(x, u, self.solverType)
+        y = self._measurements(x, u, self.synapseCurrent)
 
         # Calculates interconnections and currents of synapses here
         if self.__enSyn == True:
@@ -253,13 +253,13 @@ class nonlinear(solverCore):
         ### Input variables:
         * Time line
         
-        ### Options:
+        ### Configuration Options:
         * `initial` specifies the initial condition of the system.
         * `solver` sets the type of solver; e.g., `euler`, `rng4`, etc.
         * `estimator` specifies whether this block should be an estimator. To do this, set it to `True`.
         * `approach` specifies the type of estimator - `ekf` or `ukf`.
         '''
-        self.timeLine      = np.reshape(timeline, [1, np.size(timeline)])
+        self.timeLine      = np.reshape(timeline, (1, -1))
         self.sampleTime    = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
         self.numSteps      = np.size(self.timeLine)     # The number of sample steps
         self.solverType    = self.__class__.solverType  # The type of dynamic solver
@@ -328,7 +328,7 @@ class nonlinear(solverCore):
         
         # Retrieving the antecedent states
         xo = self.states[:, self.currentStep]
-        xo = np.reshape(xo, [np.size(xo), 1])
+        xo = np.reshape(xo, (-1, 1))
         
         # The handle function below is utilized in the following
         handleDyn = lambda xx: self.__class__._dynamics(self.__class__,
@@ -393,7 +393,7 @@ class nonlinear(solverCore):
         # Preparing and storing inputs and outputs within internal
         self.inputs[:, self.currentStep]  = u
         self.outputs[:, self.currentStep] = y
-        y = np.reshape(y, [np.size(y), 1])
+        y = np.reshape(y, (-1, 1))
         
         # Employing system dynamics to compute Jacobians
         [A, L, H, M] = self.__class__._jacobians(self.__class__,
@@ -406,7 +406,7 @@ class nonlinear(solverCore):
         #  This section endeavors to obtain a prediction estimate from the dynamic
         #  model of your system directly from nonlinear equations
         xm = self.states[:, self.currentStep]
-        xm = np.reshape(xm, [np.size(xm), 1])
+        xm = np.reshape(xm, (-1, 1))
 
         # Calculation before-state-limitations
         xv  = self.__class__._limitations(self.__class__, self.states, 0)
@@ -471,7 +471,7 @@ class nonlinear(solverCore):
         # Prepare and save inputs and outputs to internal variables
         self.inputs[:, self.currentStep]  = u
         self.outputs[:, self.currentStep] = y
-        y = np.reshape(y, [np.size(y), 1])
+        y = np.reshape(y, (-1, 1))
         # Calculate Jacobians using system dynamics
         [A, L, H, M] = self.__class__._jacobians(self.__class__,
                                                 self.states,
@@ -481,7 +481,7 @@ class nonlinear(solverCore):
                                                 currentTime)
         # Get last states prior and its covariance
         xm = self.states[:, self.currentStep]
-        xm = np.reshape(xm, [np.size(xm), 1])
+        xm = np.reshape(xm, (-1, 1))
         Pm = self.covariance
         
         # Solve sigma points - STEP 2
@@ -523,7 +523,7 @@ class nonlinear(solverCore):
             Xp[:,i] = self.__class__._limitations(self.__class__, Xp[:,i], 1)
             # Update prediction
             temp1 = Xp[:, i]
-            xp = xp + self.wm[i,0]*(np.reshape(temp1, [np.size(temp1), 1]))
+            xp = xp + self.wm[i,0]*(np.reshape(temp1, (-1, 1)))
         # End of loop
 
         dPp = Xp - xp[:, np.int8(np.zeros([1, np.size(nSpoints)])).flatten()]
@@ -554,7 +554,7 @@ class nonlinear(solverCore):
                                                         currentTime).flatten()
                 # Predicted output
                 temp1 = Zb[:, i]
-                zb = zb + self.wm[i,0]*(np.reshape(temp1, [np.size(temp1), 1]))
+                zb = zb + self.wm[i,0]*(np.reshape(temp1, (-1, 1)))
             # End of loop
 
             dSt = Zb - zb[:, np.int8(np.zeros([1, np.size(nSpoints)])).flatten()]
@@ -614,7 +614,7 @@ class nonlinear(solverCore):
         * `params`
         * The signal to be shown (`x`, `y`, or `u`); default is `x`
 
-        ### Options:
+        ### Configuration Options:
             * `select` - choose signals arbitrarily; e.g., `select=[0,2,6]`
             * `derive` - get derivatives of signals; can be used in different ways:
                 * `derive=False` or `derive=True`; default is `False`

@@ -404,7 +404,139 @@ class clib():
         # Returning the output
         return txt
 
+    ## Saving matrices - .csv
+    @staticmethod
+    def csvSave(matrix, name, **kwargs):
+        '''
+        ### Overview:
+        Saving the given matrix in a `.csv` file.
+
+        ### Input variables:
+        * `matrix` - Data, e.g., matrices or numerical vectors.
+        * `name` - The path including the name of the file. e.g. `data/outputs/MatrixName`.
         
+        ### Configuration Options:
+        * `zip` - is used to save as a `.zip` file; default = `False`.
+        '''
+        # Requirements
+        import csv
+
+        zipp = False
+        for key, val in kwargs.items():
+            # 'zip' specifies whether a zip file must be created
+            if key == 'zip': zipp = val
+        # Extracting the name and directory seperately
+        if isinstance(name, str):
+            # Split folders
+            tparts = name.split('/')
+            savePath = ''
+            if len(tparts) > 1:
+                # Directory maker
+                savePath = '/'.join(tparts[0:-1])
+                fName    = tparts[-1]
+                # Create the directory if it does not exist
+                if not os.path.isdir(savePath): os.makedirs(savePath)
+            else:
+                # If directory is not adjusted:
+                fName = tparts[0]
+        else:
+            raise ValueError("Please enter the name of the file correctly.")
+        dim = np.array(matrix.shape)
+        # The number of elements
+        total = np.prod(dim)
+        # How many elements in a row
+        eachRow = 100
+        # The figure for completed rows
+        rowCounts = int(total/eachRow)
+        # The number of elements in the whole completed matrix
+        cutNum = rowCounts*eachRow
+        # Remained numbers
+        rem = total - cutNum
+        # The default value of order is 'C', which stands for row-major order.
+        # You can also use 'F' to specify column-major order.
+        daTa = matrix.flatten(order='F')
+        # Main data as a matrix
+        bodyDaTa = np.reshape(daTa[0:cutNum], (rowCounts, eachRow), order='F')
+        # Overflow elements
+        lastDaTa = daTa[cutNum:]
+        # Open the file in write mode and automatically close it after the block of code inside it is executed
+        # The newline='' argument clears the file when opened in write mode.
+        with open(name + '.csv', 'w', newline='') as f:
+            # Create a writer object that can write data to the file
+            writer = csv.writer(f)
+            # Write the file dimention
+            writer.writerow(dim)
+            # Iterate over each row in the matrix list (Body)
+            for row in bodyDaTa:
+                # Write the row to the file
+                writer.writerow(row)
+            # Last row
+            writer.writerow(lastDaTa)
+        # Zipper
+        if zipp == True:
+            import zipfile
+            # Create a new ZIP archive
+            with zipfile.ZipFile(name + '.zip', 'w', compression=zipfile.ZIP_DEFLATED) as zip:
+                # Add one or more files to the archive
+                zip.write(name + '.csv', arcname= fName + '.csv')
+            os.remove(name + '.csv')
+            print('The file named "' + fName + '.zip" has been saved into "' + savePath + '".')
+            return
+        # Print the result of saving
+        print('The file named "' + fName + '.csv" has been saved into "' + savePath + '".')
+
+    ## Loading matrices - .csv
+    @staticmethod
+    def csvLoad(name, **kwargs):
+        '''
+        ### Overview:
+        Loading the content of the given `.csv` file.
+
+        ### Input variables:
+        * `name` - The path including the name of the file. e.g. `data/outputs/MatrixName`.
+
+        ### Options:
+        * `maxsize` - Providing the size of the file is bigger than usual (default is `1000 MB`),
+        set this value more than your file size (in `MB`). Note that the bigger value needs more RAM space.
+        Do not waste your RAM carelessly.
+        '''
+        # Requirements
+        import csv
+        import ast
+        # Extracting the name and directory seperately
+        if not isinstance(name, str): raise ValueError("Please enter the name of the file correctly.")
+        # Default size limit is 1000 MB
+        maxFileSizeInMB = 1000
+        # Extract the given file size restriction
+        for key, val in kwargs.items():
+            if key == 'maxsize': maxFileSizeInMB = val
+        csv.field_size_limit(maxFileSizeInMB * 1024 * 1024)
+        # Open the file in read mode and automatically close it after the block of code inside it is executed
+        with open(name + '.csv', 'r') as file:
+            # Create a reader object that can read the contents of the file
+            reader = csv.reader(file)
+            # Create empty lists to store the data and its dimention
+            data = []
+            dim  = []
+            # Iterate over each row in the reader object
+            for i, row in enumerate(reader):
+                # Check if the current row is the first row
+                if i ==0:
+                    dim = [float(x) for x in row]  # Save the first row in `dd`
+                else:
+                    # Append a new list of floats to the data list byconverting
+                    # each element in the row from a string to a float.
+                    data.append([float(x) for x in row])
+        # Reshaping the matrix
+        daTa = np.array(data[:-1]).flatten(order='F')
+        # Adding the last part of data
+        daTa = np.concatenate((daTa, np.array(data[-1])), axis=0)
+        # Reshape to original
+        daTa = daTa.reshape(np.int32(dim), order='F')
+        # Print the result of loading
+        print('The file named "' + name + '.csv" has been loaded.')
+        return daTa
+
     ## Delayed in a signal
     @staticmethod
     def delayed(u, k, pdelay):
@@ -797,7 +929,7 @@ class plib():
         * An array comprising all colors
         '''
 
-        locs   = np.reshape(np.double(locs), [1, np.size(locs)])
+        locs   = np.reshape(np.double(locs), (1, -1))
         colors = np.array(colors)
 
         numofGrads = colors.shape[0] - 1

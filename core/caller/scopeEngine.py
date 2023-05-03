@@ -24,7 +24,7 @@ class scope():
         * Time line (is not necessary in load approach)
         * `N` - Number of signals (is not necessary in load approach)
         
-        ### Options:
+        ### Configuration Options:
         * `initial` - denotes the initial condition of the estimator
         * `load` - to load a `.csv` file which has been saved before. To import
         your saved files, use `load=(params, name)` structure, which `params` denotes
@@ -32,6 +32,9 @@ class scope():
         Bear in mind that your files must be moved into `../outputs/scope/` directory,
         although the directory must not inserted as a part of `name`. e.g., `scope(load=(params, 'Voltage'))`.
         '''
+        # Requirements
+        from core.lib.coreLib import clib
+        # Initial variable values
         initialcondition = np.array([0])
         loadFlag = False
         # Extracting the arbitraty value of properties
@@ -45,26 +48,14 @@ class scope():
                 fName  = val[1]
 
         if loadFlag == True:
-            # Requirements
-            import csv
-            import ast
-            # increase the field size limit to 1000 MB
-            csv.field_size_limit(1000 * 1024 * 1024)
             # Load the file and extract the content
-            savePath = params.savePath + '/scope/'
-            with open(savePath + fName + '.csv', 'r') as file:
-                reader = csv.reader(file)
-                data = []
-                for row in reader:
-                    data.append([float(x) for x in row])
-            # convert the list of lists to a NumPy array
-            daTa = np.array(data)
-
-            self.timeLine   = daTa[0,:].reshape([1, np.size(daTa, 1)])
+            daTa = clib.csvLoad(params.savePath + '/scope/' + fName)
+            # Set the dependent vectors
+            self.timeLine   = daTa[0,:].reshape((1, -1))
             self.signals    = daTa[1:,:]
             self.numSignals = np.size(self.signals, 0)
         else:
-            self.timeLine   = np.reshape(tLine, [1, np.size(tLine)]) # Time line vector
+            self.timeLine   = np.reshape(tLine, (1, -1)) # Time line vector
             self.timeLine   = np.array(self.timeLine)
             self.numSignals = nSignals
             self.signals    = np.zeros([self.numSignals, np.size(self.timeLine)]) # Signal matrix
@@ -78,7 +69,7 @@ class scope():
         iniSh = initialcondition.shape
         if sum(iniSh) == self.numSignals or sum(iniSh) == self.numSignals + 1:
             # If the imported initial value is not a column vector, do this:
-            initialcondition = np.reshape(initialcondition, [np.size(initialcondition), 1])
+            initialcondition = np.reshape(initialcondition, (-1, 1))
             self.signals += 1
             self.signals  = initialcondition*self.signals
         elif sum(iniSh) != 1 and sum(iniSh) != 2:
@@ -97,7 +88,7 @@ class scope():
         ### Input variables:
         * Getting data at step `k`
 
-        ### Options:
+        ### Configuration Options:
         * `noise` is used to add a noise as the measurement noise
         '''
         # Inserted data, additive noise Variance
@@ -117,32 +108,28 @@ class scope():
         self.currentStep += 1
         
     # The 'save' function saves the internal data.
-    def save(self, params, name = 'Unknown'):
+    def store(self, params, name = 'Unknown', **kwargs):
         '''
         ### Overview:
-        Used to save data as a `csv` file.
+        Used to save data as a `.csv` file.
 
         ### Input variables:
         * `params`
         * `name` - The name of the file (is not necessary)
+
+        ### Configuration Options:
+        * `zip` - is used to save as a `.zip` file; default = `False`.
         '''
         # Requirements
         from core.lib.coreLib import clib
-        import csv
         # The directory
         savePath   = params.savePath + '/scope/'
-        # Changing the file name 
+        # Changing the file name
         if params.uniqueSave == True:
             name = name + '_' + clib.getNow()
         # Preparing data
         daTa = np.concatenate((self.timeLine, self.signals), axis=0)
-        # Create the directory if it does not exist
-        if not os.path.isdir(savePath): os.makedirs(savePath)
-        # The newline='' argument clears the file when opened in write mode.
-        with open(savePath + name + '.csv', 'w', newline='') as f:
-            writer = csv.writer(f)
-            for row in daTa:
-                writer.writerow(row)
+        clib.csvSave(daTa, savePath + name, **kwargs)
 
     # This function can make a jump in the step number variable
     # If no arguments are available, jump 1 step
@@ -173,7 +160,7 @@ class scope():
         ### input variables:
         * `params`
 
-        ### Options:
+        ### Configuration Options:
             * `select` - choose signals arbitrarily; e.g., `select=[0,2,6]`
             * `derive` - get derivatives of signals; can be used in different ways:
                 * `derive=False` or `derive=True`; default is `False`
@@ -234,7 +221,7 @@ class scope():
         if select == -1: select = range(0, self.numSignals)
         notime = np.array(notime)
         if notime.shape == (len(notime),):
-            notime = np.reshape(notime, [1, len(notime)])
+            notime = np.reshape(notime, (1, -1))
         derive = np.array(derive)
 
         if np.size(notime, 1) == 1:
@@ -377,7 +364,7 @@ class scope():
         ### Input variables:
         * `params`
 
-        ### Options:
+        ### Configuration Options:
         * `select` - choose signals arbitrarily; e.g., `select=[0,2,6]`
         * `derive` - get derivatives of signals; can be used in different ways:
             * `derive=False` or `derive=True`; default is `False`
