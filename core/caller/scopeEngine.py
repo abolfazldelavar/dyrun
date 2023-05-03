@@ -16,30 +16,62 @@ class scope():
     # 2) Use the below piece of code in 'simulation.py' to save each step
     #    signals.x.getdata(Input signal at step k, noise=0)
     
-    def __init__(self, tLine, nSignals, **kwargs):
+    def __init__(self, tLine = 0, nSignals = 1, **kwargs):
         '''
         This class is a kind of scope that can save your signals, and can be used for after running purposes.
 
         ### Input variables:
-        * Time line
-        * Number of signals
+        * Time line (is not necessary in load approach)
+        * `N` - Number of signals (is not necessary in load approach)
         
         ### Options:
-        * `initial` denotes the initial condition of the estimator
+        * `initial` - denotes the initial condition of the estimator
+        * `load` - to load a `.csv` file which has been saved before. To import
+        your saved files, use `load=(params, name)` structure, which `params` denotes
+        the parameters and `name` is the name of file you would like the file save with it.
+        Bear in mind that your files must be moved into `../outputs/scope/` directory,
+        although the directory must not inserted as a part of `name`. e.g., `scope(load=(params, 'Voltage'))`.
         '''
         initialcondition = np.array([0])
+        loadFlag = False
         # Extracting the arbitraty value of properties
         for key, val in kwargs.items():
             # The initial condition
             if key == 'initial': initialcondition = np.array(val)
+            # To load data from a file
+            if key == 'load':
+                loadFlag = True
+                params = val[0]
+                fName  = val[1]
 
-        self.timeLine    = np.reshape(tLine, [1, np.size(tLine)])   # Time line vector
-        self.timeLine    = np.array(self.timeLine)
+        if loadFlag == True:
+            # Requirements
+            import csv
+            import ast
+            # increase the field size limit to 1000 MB
+            csv.field_size_limit(1000 * 1024 * 1024)
+            # Load the file and extract the content
+            savePath = params.savePath + '/scope/'
+            with open(savePath + fName + '.csv', 'r') as file:
+                reader = csv.reader(file)
+                data = []
+                for row in reader:
+                    data.append([float(x) for x in row])
+            # convert the list of lists to a NumPy array
+            daTa = np.array(data)
+
+            self.timeLine   = daTa[0,:].reshape([1, np.size(daTa, 1)])
+            self.signals    = daTa[1:,:]
+            self.numSignals = np.size(self.signals, 0)
+        else:
+            self.timeLine   = np.reshape(tLine, [1, np.size(tLine)]) # Time line vector
+            self.timeLine   = np.array(self.timeLine)
+            self.numSignals = nSignals
+            self.signals    = np.zeros([self.numSignals, np.size(self.timeLine)]) # Signal matrix
+            
         self.sampleTime  = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
-        self.numSignals  = nSignals                                 # The number of signals
-        self.currentStep = 0                                        # The current step of simulation
-        self.n           = np.size(self.timeLine)                   # The number of time steps
-        self.signals     = np.zeros([self.numSignals, self.n])      # Signal matrix
+        self.currentStep = 0 # The current step of simulation
+        self.n           = np.size(self.timeLine) # The number of time steps
 
         # If the initial input does not exist, set it zero
         # Else, put the initial condition in the state matrix
@@ -56,10 +88,11 @@ class scope():
                 raise ValueError("The dimensional of initial value that inserted is wrong. Check it please.")
 
         
-    # The 'save' function can receive value and save it.
-    def save(self, insData, **kwargs):
+    # The 'get' function can receive value and keep it.
+    def get(self, insData, **kwargs):
         '''
-        To saving data given step-by-step.
+        ### Overview:
+        Getting data given step-by-step.
 
         ### Input variables:
         * Getting data at step `k`
@@ -83,10 +116,39 @@ class scope():
         self.signals[:, self.currentStep] = insData.flatten() + noiseSig.flatten()
         self.currentStep += 1
         
+    # The 'save' function saves the internal data.
+    def save(self, params, name = 'Unknown'):
+        '''
+        ### Overview:
+        Used to save data as a `csv` file.
+
+        ### Input variables:
+        * `params`
+        * `name` - The name of the file (is not necessary)
+        '''
+        # Requirements
+        from core.lib.coreLib import clib
+        import csv
+        # The directory
+        savePath   = params.savePath + '/scope/'
+        # Changing the file name 
+        if params.uniqueSave == True:
+            name = name + '_' + clib.getNow()
+        # Preparing data
+        daTa = np.concatenate((self.timeLine, self.signals), axis=0)
+        # Create the directory if it does not exist
+        if not os.path.isdir(savePath): os.makedirs(savePath)
+        # The newline='' argument clears the file when opened in write mode.
+        with open(savePath + name + '.csv', 'w', newline='') as f:
+            writer = csv.writer(f)
+            for row in daTa:
+                writer.writerow(row)
+
     # This function can make a jump in the step number variable
     # If no arguments are available, jump 1 step
     def __iadd__(self, i = 1):
         '''
+        ### Overview:
         This function can make a jump in the step number variable.
 
         ### Input variables:
@@ -97,6 +159,7 @@ class scope():
     # Reset Block by changing the current step to zero
     def reset(self):
         '''
+        ### Overview:
         Reseting the block via changing the current step to zero.
         '''
         self.currentStep = 0
@@ -435,4 +498,3 @@ class scope():
         ax.set_yticks([0, imHeight], [str(select[0]), str(select[-1])])
         
 # End of class
-
