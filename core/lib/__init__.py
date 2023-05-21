@@ -4,15 +4,3 @@
 #    Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
 #    Web: https://github.com/abolfazldelavar/dyrun
 ## // --------------------------------------------------------------
-
-logs
-__pycache__
-local
-.vscode
-
-# all jupyter files are neglected except *
-*.ipynb
-!dyrun.ipynb
-
-# all PDF files are ignored
-*.pdf
