@@ -81,7 +81,7 @@ params.default_image_format = 'png' # (string)
 # %%
 signals = Structure()
 # Generate a time vector for the simulation using the specified time-step and simulation time.
-signals.timeline = np.arange(0, params.t_final, params.step)
+signals.time_line = np.arange(0, params.t_final, params.step)
 # Insert signal data here ~~~>
 
 # %% [markdown]
@@ -156,7 +156,7 @@ Clib.end_report(simulation_start_time)
 ## Initialize the variables and parameters
 n = params.n # number of elements
 n_line = np.arange(0, n) # create a vector from 0 to n-1
-tLine = signals.timeline[n_line] # create a time-line vector with length n
+tLine = signals.time_line[n_line] # create a time-line vector with length n
 Plib.initialize() # initialize the library
 ## Write your codes here ~~~>
 
