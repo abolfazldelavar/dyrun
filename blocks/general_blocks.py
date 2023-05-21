@@ -1,15 +1,15 @@
 
 ## // --------------------------------------------------------------
-#    ***FARYADELL SIMULATION FRAMEWORK***
-#    Creator:   Abolfazl Delavar
-#    Web:       https://github.com/abolfazldelavar
+#    ***DYNAMIC RUNNER***
+#    Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+#    Web: https://github.com/abolfazldelavar/dyrun
 ## // --------------------------------------------------------------
 
 # Import initialize classes
-from core.lib.pyRequirement import *
-from core.caller.dyEngine import *
+from core.lib.required_libraries import *
+from core.caller.dynamic_engine import *
 
-class quadrupleTank(nonlinear):
+class QuadrupleTank(Nonlinear):
     '''
     ### Quadruple tanks model
     This model is given from the below sourc:
@@ -19,62 +19,62 @@ class quadrupleTank(nonlinear):
     '''
 
     # This name will be showed as its plot titles
-    name          = 'Quadruple-tank process'
-    numStates     = 4                # Number of states
-    numInputs     = 2                # Number of inputs
-    numOutputs    = 2                # Number of outputs
-    timeType      = 'c'              # 'c' -> Continuous, 'd' -> Discrete
-    solverType    = 'euler'          # 'euler', 'runge'
-    initialStates = np.ones([4,1])   # Initial value of states
+    name = 'Quadruple-tank process'
+    n_states = 4 # Number of states
+    n_inputs = 2 # Number of inputs
+    n_outputs = 2 # Number of outputs
+    time_type = 'c' # 'c' -> Continuous, 'd' -> Discrete
+    solver_type = 'euler' # 'euler', 'rng4'
+    initial_states = np.ones([4,1]) # Initial value of states
     
     # EXTENTED KALMAN FILTER --------
-    covariance = 1e+3*np.eye(4)   # Covariance of states
-    qMatrix    = np.eye(4)*2e-1   # Dynamic noise variance
-    rMatrix    = np.eye(2)*1e0    # Measurement noise variance
+    covariance = 1e+3*np.eye(4) # Covariance of states
+    q_atrix = np.eye(4)*2e-1 # Dynamic noise variance
+    r_matrix = np.eye(2)*1e0 # Measurement noise variance
     
     # UNSKENTED KALMAN FILTER -------
     # Note that 'Extended KF' parameters is also useful for 'Unscented KF', 
     # so just put your values there, as well.
-    kappa = 80       # A non-negative real number
-    alpha = 0.2      # a \in (0, 1]
+    kappa = 80 # A non-negative real number
+    alpha = 0.2 # a \in (0, 1]
 
     # Other variables
-    mp_a1  = 0.071     # cm^2
-    mp_a2  = 0.057     # cm^2
-    mp_a3  = 0.071     # cm^2
-    mp_a4  = 0.057     # cm^2
-    mp_A1  = 28        # cm^2
-    mp_A2  = 32        # cm^2
-    mp_A3  = 28        # cm^2
-    mp_A4  = 32        # cm^2
-    mp_g   = 981       # cm/s^2
-    mp_k1  = 3.33      # cm^3/Vs --- (3.14) is also possible
-    mp_k2  = 3.35      # cm^3/Vs --- (3.29) is also possible
-    mp_ga1 = 0.7       # (0.43) is also possible
-    mp_ga2 = 0.6       # (0.34) is also possible
-    mp_kc  = 0.5       # V/cm
+    mp_a1 = 0.071 # cm^2
+    mp_a2 = 0.057 # cm^2
+    mp_a3 = 0.071 # cm^2
+    mp_a4 = 0.057 # cm^2
+    mp_A1 = 28 # cm^2
+    mp_A2 = 32 # cm^2
+    mp_A3 = 28 # cm^2
+    mp_A4 = 32 # cm^2
+    mp_g = 981 # cm/s^2
+    mp_k1 = 3.33 # cm^3/Vs --- (3.14) is also possible
+    mp_k2 = 3.35 # cm^3/Vs --- (3.29) is also possible
+    mp_ga1 = 0.7 # (0.43) is also possible
+    mp_ga2 = 0.6 # (0.34) is also possible
+    mp_kc = 0.5 # V/cm
 
     ## This part is internal dynamic functions that represents
     #  internal relations between states and inputs
     #  ~~> dx = f(x,u)
-    def _dynamics(self, x, u, k, st, t):
+    def _dynamics(self, x, input_signal, k, st, t):
         # Parameters, States, Inputs, Current step, Sample-time, Current time
         dx      = np.zeros([4, 1])
         dx[0,0] = -self.mp_a1/self.mp_A1*np.sqrt(2*self.mp_g*x[0, k]) + \
                    self.mp_a3/self.mp_A1*np.sqrt(2*self.mp_g*x[2, k]) + \
-                   self.mp_ga1*self.mp_k1/self.mp_A1*u[0, k]
+                   self.mp_ga1*self.mp_k1/self.mp_A1*input_signal[0, k]
         dx[1,0] = -self.mp_a2/self.mp_A2*np.sqrt(2*self.mp_g*x[1, k]) + \
                    self.mp_a4/self.mp_A2*np.sqrt(2*self.mp_g*x[3, k]) + \
-                   self.mp_ga2*self.mp_k2/self.mp_A2*u[1, k]
+                   self.mp_ga2*self.mp_k2/self.mp_A2*input_signal[1, k]
         dx[2,0] = -self.mp_a3/self.mp_A3*np.sqrt(2*self.mp_g*x[2, k]) + \
-                   (1 - self.mp_ga2)*self.mp_k2/self.mp_A3*u[1, k]
+                   (1 - self.mp_ga2)*self.mp_k2/self.mp_A3*input_signal[1, k]
         dx[3,0] = -self.mp_a4/self.mp_A4*np.sqrt(2*self.mp_g*x[3, k]) + \
-                   (1 - self.mp_ga1)*self.mp_k1/self.mp_A4*u[0, k]
+                   (1 - self.mp_ga1)*self.mp_k1/self.mp_A4*input_signal[0, k]
         return dx
 
     ## Measurement functions
     #  ~~> y = g(x,u)
-    def _measurements(self, x, u, k, st, t):
+    def _measurements(self, x, input_signal, k, st, t):
         # Parameters, States, Inputs, Current step, Sample-time, Current time
         y      = np.zeros([2, 1])
         y[0,0] = self.mp_kc*x[0, k]
@@ -95,7 +95,7 @@ class quadrupleTank(nonlinear):
 
     ## Jacobians
     #  ~~> d(A,B,C,D)/d(x,u)
-    def _jacobians(self, x, u, k, st, t):
+    def _jacobians(self, x, input_signal, k, st, t):
         # [A, L, H, M] <- (Parameters, States, Inputs, Current step, Sample-time, Current time)
         # INSTRUCTION:
         #   dx = Ax + Lw,     'x' is states and 'w' denotes the process noise
@@ -136,24 +136,24 @@ class quadrupleTank(nonlinear):
 # End of class
 
 
-class lorenz(nonlinear):
+class Lorenz(Nonlinear):
     '''
     ### Lorenz chaos model
     '''
 
     # This name will be showed as its plot titles
-    name          = 'Lorenz Chaos'
-    numStates     = 3                # The number of states
-    numInputs     = 1                # The number of inputs
-    numOutputs    = 2                # The number of outputs
-    timeType      = 'c'              # 'c' -> Continuous, 'd' -> Discrete
-    solverType    = 'euler'          # 'euler', 'rng4'
-    initialStates = np.ones([3,1])   # Initial value of states
+    name = 'Lorenz Chaos'
+    n_states = 3 # The number of states
+    n_inputs = 1 # The number of inputs
+    n_outputs = 2 # The number of outputs
+    time_type = 'c' # 'c' -> Continuous, 'd' -> Discrete
+    solver_type = 'euler' # 'euler', 'rng4'
+    initial_states = np.ones([3,1]) # Initial value of states
     
     # EXTENTED KALMAN FILTER --------
-    covariance = 1e+3*np.eye(3)   # Covariance of states
-    qMatrix    = np.eye(3)*1e0    # Dynamic noise variance
-    rMatrix    = np.eye(2)*1e0    # Measurement noise variance
+    covariance = 1e+3*np.eye(3) # Covariance of states
+    q_matrix = np.eye(3)*1e0 # Dynamic noise variance
+    r_matrix = np.eye(2)*1e0 # Measurement noise variance
     
     # UNSKENTED KALMAN FILTER -------
     # Note that 'Extended KF' parameters is also useful for 'Unscented KF', 
@@ -169,17 +169,17 @@ class lorenz(nonlinear):
     ## This part is internal dynamic functions that represents
     #  internal relations between states and inputs
     #  ~~> dx = f(x,u)
-    def _dynamics(self, x, u, k, st, t):
+    def _dynamics(self, x, input_signal, k, st, t):
         # Parameters, States, Inputs, Current step, Sample-time, Current time
         dx      = np.zeros([3, 1])
-        dx[0,0] = self.mp_sigma*x[1, k] - self.mp_sigma*x[0, k] + u[0, k]
+        dx[0,0] = self.mp_sigma*x[1, k] - self.mp_sigma*x[0, k] + input_signal[0, k]
         dx[1,0] = self.mp_ro*x[0, k] - x[0, k]*x[2, k] - x[1, k]
         dx[2,0] = x[0, k]*x[1, k] - self.mp_beta*x[2, k]
         return dx
 
     ## Measurement functions 
     #  ~~> y = g(x,u)
-    def _measurements(self, x, u, k, st, t):
+    def _measurements(self, x, input_signal, k, st, t):
         # Parameters, States, Inputs, Current step, Sample-time, Current time
         y      = np.zeros([2, 1])
         y[0,0] = x[0, k]
@@ -200,7 +200,7 @@ class lorenz(nonlinear):
         
     ## Jacobians
     #  ~~> d(A,B,C,D)/d(x,u)
-    def _jacobians(self, x, u, k, st, t):
+    def _jacobians(self, x, input_signal, k, st, t):
         # [A, L, H, M] <- (Parameters, States, Inputs, Current step, Sample-time, Current time)
         # INSTRUCTION:
         #   dx = Ax + Lw,     'x' is states and 'w' denotes the process noise

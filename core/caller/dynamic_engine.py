@@ -1,18 +1,18 @@
 
 ## // --------------------------------------------------------------
-#    ***FARYADELL SIMULATION FRAMEWORK***
-#    Creator:   Abolfazl Delavar
-#    Web:       https://github.com/abolfazldelavar
+#    ***DYNAMIC RUNNER***
+#    Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+#    Web: https://github.com/abolfazldelavar/dyrun
 ## // --------------------------------------------------------------
 
 # Import initial classes
-from core.lib.pyRequirement import *
-from core.lib.coreLib  import solverCore
-from core.caller.scopeEngine import scope
+from core.lib.required_libraries import *
+from core.lib.core_library import SolverCore, Clib
+from core.caller.scope_engine import Scope
 
 # Linear dynamics
-class ltiGroup():
-    def __init__(self, iSys, sampletime, **kwargs):
+class LtiGroup():
+    def __init__(self, inserted_system, sample_time, **kwargs):
         '''
         ### Overview:
         This class facilitates the creation of a collection of LTI systems that may also have interactions.
@@ -27,70 +27,79 @@ class ltiGroup():
         * `initial`: Specifies the initial state of the system
         * `replicate`: Determines the number of components; default value is `1`
         * `delay`: Defines the input delay in step scale; for example, `18` steps
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
-        self.inputsystem = iSys
-        if iSys.dt == sampletime and type(iSys) == StateSpace:
+        self.inserted_system = inserted_system
+        if inserted_system.dt == sample_time and type(inserted_system) == StateSpace:
             # The input is a discrete-time state-space system with a consistent sample time.
-            self.block = iSys
-        elif iSys.dt == sampletime and type(iSys) == TransferFunction:
+            self.system = inserted_system
+        elif inserted_system.dt == sample_time and type(inserted_system) == TransferFunction:
             # The input is a discrete-time transfer function with a consistent sample time.
-            self.block = minreal(tf2ss(iSys))
-        elif type(iSys) == StateSpace:
-            if iSys.dt != 0:
+            self.system = minreal(tf2ss(inserted_system))
+        elif type(inserted_system) == StateSpace:
+            if inserted_system.dt != 0:
                 # The input is a discrete-time state-space system with a different sample time.
-                # MATLAB code is: self.block = d2d(iSys, sampletime);
+                # MATLAB code is: self.system = d2d(inserted_system, sample_time);
                 pass
             else:
                 # The input is a continuous-time state-space system.
-                self.block = c2d(iSys, sampletime)
-        elif iSys.dt != 0:
+                self.system = c2d(inserted_system, sample_time)
+        elif inserted_system.dt != 0:
             # The input is a discrete-time transfer function with a different sample time.
-            # MATLAB code is: self.block = d2d(minreal(ss(iSys)), sampletime);
+            # MATLAB code is: self.system = d2d(minreal(ss(inserted_system)), sample_time);
             pass
         else:
             # The input is a continuous-time transfer function.
-            self.block = c2d(ss(iSys), sampletime)
+            self.system = c2d(ss(inserted_system), sample_time)
         
-        initialcondition = [0]
-        timedelay        = 0
-        nSystems         = 1
+        initial_condition = [0]
+        time_delay = 0
+        n_systems = 1
         for key, val in kwargs.items():
             # 'initial' specifies the initial value of the states
-            if key == 'initial': initialcondition = val
+            if key == 'initial': initial_condition = val
             # 'delay' specifies the input delay in seconds
-            if key == 'delay': timedelay = val
+            if key == 'delay': time_delay = val
             # 'replicate' specifies the number of blocks
-            if key == 'replicate': nSystems = val
+            if key == 'replicate': n_systems = val
 
-        self.numberLTIs = nSystems               # The number of LTI systems
-        self.sampleTime = sampletime             # Simulation sample time
-        self.A          = self.block.A           # Dynamic matrix A
-        self.B          = self.block.B           # Dynamic matrix B
-        self.C          = self.block.C           # Dynamic matrix C
-        self.D          = self.block.D           # Dynamic matrix D
-        self.numStates  = self.block.A.shape[0]  # The number of states
-        self.numInputs  = self.block.B.shape[1]  # The number of inputs
-        self.numOutputs = self.block.C.shape[0]  # The number of measurements
-        self.delay      = timedelay              # Delay steps
-        self.inputs     = np.zeros([self.numInputs , self.numberLTIs, self.delay + 1])
-        self.outputs    = np.zeros([self.numOutputs, self.numberLTIs])
-        self.states     = np.zeros([self.numStates, self.numberLTIs])
+        self.number_ltis = n_systems # The number of LTI systems
+        self.sample_time = sample_time # Simulation sample time
+        self.A = self.system.A # Dynamic matrix A
+        self.B = self.system.B # Dynamic matrix B
+        self.C = self.system.C # Dynamic matrix C
+        self.D = self.system.D # Dynamic matrix D
+        self.n_states = self.system.A.shape[0] # The number of states
+        self.n_inputs = self.system.B.shape[1] # The number of inputs
+        self.n_outputs = self.system.C.shape[0] # The number of measurements
+        self.delay = time_delay # Delay steps
+        self.inputs = np.zeros([self.n_inputs , self.number_ltis, self.delay + 1])
+        self.outputs = np.zeros([self.n_outputs, self.number_ltis])
+        self.states = np.zeros([self.n_states, self.number_ltis])
         
-        # If the initial input does not exist, set it to zero. Otherwise, put the initial condition in the state matrix.
-        initialcondition = np.array(initialcondition)
-        iniSh = initialcondition.shape
-        if sum(iniSh) == self.numStates or sum(iniSh) == self.numStates + 1:
+        # If the initial input does not exist, set it to zero.
+        # Otherwise, put the initial condition in the state matrix.
+        initial_condition = np.array(initial_condition)
+        inish = initial_condition.shape
+        if sum(inish) == self.n_states or sum(inish) == self.n_states + 1:
             # If the imported initial value is not a column vector, reshape it.
-            initialcondition = np.reshape(initialcondition, (-1, 1))
+            initial_condition = np.reshape(initial_condition, (-1, 1))
             self.states += 1
-            self.states  = initialcondition*self.states
-        elif initialcondition.size != 1:
-            if initialcondition.shape == (self.numStates, self.numberLTIs):
-                self.states = initialcondition
+            self.states  = initial_condition*self.states
+        elif initial_condition.size != 1:
+            if initial_condition.shape == (self.n_states, self.number_ltis):
+                self.states = initial_condition
             else:
-                raise ValueError("The dimensions of the inserted initial value are incorrect. Please check it.")
+                err_text = "The dimensions of the inserted initial value are incorrect. Please check it."
+                logging.error(err_text)
+                raise ValueError(err_text)
+        # Comment and diary
+        Clib.diary('LTI system has been created.')
 
-    def __call__(self, u, xNoise = 0, yNoise = 0):
+    def __call__(self, input_signal, x_noise = 0, y_noise = 0):
         '''
         ### Overview:
         This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
@@ -99,10 +108,14 @@ class ltiGroup():
         * Input array at step `k`
         * Internal additive noise which is added to the states
         * External additive noise which is added to the measurements
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
         # Shifts the input signal to create a delayed input signal
         self.inputs = np.roll(self.inputs, -1, axis=2)
-        self.inputs[:,:,-1] = u
+        self.inputs[:,:,-1] = input_signal
         
         # Updates the states using the state-space equation dx = Ax + Bu
         x = self.A.dot(self.states) + self.B.dot(self.inputs[:,:,0])
@@ -111,16 +124,16 @@ class ltiGroup():
         y = self.C.dot(self.states) + self.D.dot(self.inputs[:,:,0])
         
         # Updates internal signals
-        self.states  = x + xNoise
-        self.outputs = y + yNoise
+        self.states = x + x_noise
+        self.outputs = y + y_noise
     
     def __repr__(self):
-        return f"** {self.__class__.__name__} **\nNumber of elements: {self.numberLTIs}"
+        return f"** {self.__name__} **\nNumber of elements: {self.number_ltis}"
 # End of class
 
 # Nonlinear dynamic group
-class nonlinearGroup(solverCore):
-    def __init__(self, sampletime, **kwargs):
+class NonlinearGroup(SolverCore):
+    def __init__(self, sample_time, **kwargs):
         '''
         ### Overview:
         This class belongs to the `Neuron Family` and offers tools for constructing
@@ -138,58 +151,66 @@ class nonlinearGroup(solverCore):
         * `pre`: A vector containing the IDs of components connected to `post`s; for example, `[1,1,2,3]`
         * `post`: A vector representing Posterior; for example, `[3,2,3,2]`
         * `solver`: Sets the type of solver to be used; for example, `euler`, `rng4`, etc.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
-        initialcondition = [0]
-        timedelay        = 0
-        self.__enSyn     = False
-        pre              = np.array(0)
-        post             = np.array(0)
-        nNeurons         = 1
-        solverType       = self.solverType
+        initial_condition = [0]
+        time_delay = 0
+        self.enable_synapses = False
+        pre = np.array(0)
+        post = np.array(0)
+        n_neurons = 1
+        solver_type = self.solver_type
         for key, val in kwargs.items():
             # 'initial' specifies the initial condition of the system
-            if key == 'initial': initialcondition = val
+            if key == 'initial': initial_condition = val
             # 'delay' specifies the input delay in step scale
-            if key == 'delay': timedelay = val
+            if key == 'delay': time_delay = val
             # 'replicate' specifies the number of blocks
-            if key == 'replicate': nNeurons = val
+            if key == 'replicate': n_neurons = val
             # 'pre' specifies the pre numbers
             if key == 'pre':
                 pre = val
-                self.__enSyn = True
+                self.enable_synapses = True
             # 'post' specifies the post numbers
             if key == 'post': post = val
             # Specifies the dynamic solver type
-            if key == 'solver': solverType = val
+            if key == 'solver': solver_type = val
 
-        self.delay          = timedelay   # The input signals over time
-        self.pre            = pre         # Pre
-        self.post           = post        # Post
-        self.sampleTime     = sampletime  # The simulation sample time
-        self.numberNeurons  = nNeurons    # The number of neurons (Network size)
-        self.solverType     = solverType  # The type of dynamic solver
-        self.initialStates  = np.reshape(self.initialStates, (-1, 1))
-        self.synapseCurrent = np.zeros([self.numSynapsesSignal, self.numberNeurons])
-        self.inputs         = np.zeros([self.numInputs,  self.numberNeurons, self.delay + 1])
-        self.outputs        = np.zeros([self.numOutputs, self.numberNeurons])
-        self.states         = np.ones([self.numStates,  self.numberNeurons])
-        self.states         = self.initialStates*self.states
+        self.delay = time_delay # The input signals over time
+        self.pre = pre # Pre
+        self.post = post # Post
+        self.sample_time = sample_time # The simulation sample time
+        self.n_neurons = n_neurons # The number of neurons (Network size)
+        self.solver_type = solver_type  # The type of dynamic solver
+        self.initial_states = np.reshape(self.initial_states, (-1, 1))
+        self.synapses_current = np.zeros([self.n_synapses_signal, self.n_neurons])
+        self.inputs = np.zeros([self.n_inputs,  self.n_neurons, self.delay + 1])
+        self.outputs = np.zeros([self.n_outputs, self.n_neurons])
+        self.states = np.ones([self.n_states,  self.n_neurons])
+        self.states = self.initial_states*self.states
         
         # If the initial input does not exist, set it to zero. Otherwise, put the initial condition in the state matrix.
-        initialcondition = np.array(initialcondition)
-        iniSh = initialcondition.shape
-        if sum(iniSh) == self.numStates or sum(iniSh) == self.numStates + 1:
+        initial_condition = np.array(initial_condition)
+        inish = initial_condition.shape
+        if sum(inish) == self.n_states or sum(inish) == self.n_states + 1:
             # If the imported initial value is not a column vector, reshape it.
-            initialcondition = np.reshape(initialcondition, (-1, 1))
+            initial_condition = np.reshape(initial_condition, (-1, 1))
             self.states += 1
-            self.states  = initialcondition*self.states
-        elif sum(iniSh) != 1 and sum(iniSh) != 2:
-            if iniSh == (self.numStates, self.numberNeurons):
-                self.states = initialcondition
+            self.states  = initial_condition*self.states
+        elif sum(inish) != 1 and sum(inish) != 2:
+            if inish == (self.n_states, self.n_neurons):
+                self.states = initial_condition
             else:
-                raise ValueError("The dimensions of the inserted initial value are incorrect. Please check it.")
+                err_text = "The dimensions of the inserted initial value are incorrect. Please check it."
+                logging.error(err_text)
+                raise ValueError(err_text)
+        # Comment & diary
+        Clib.diary('"' + self.name + '" has been created.')
     
-    def __call__(self, u, outInput = False, xNoise = 0, yNoise = 0):
+    def __call__(self, input_signal, **kwargs):
         '''
         ### Overview:
         This function can provide a `prediction` of the next step, using the current inputs.
@@ -199,50 +220,61 @@ class nonlinearGroup(solverCore):
         * Output control signal used in synapse calculations; the default value is `False`
         * Internal additive noise which is added to the states
         * External additive noise which is added to the measurements
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
+        ext_input = False
+        x_noise = 0
+        y_noise = 0
+        for key, val in kwargs.items():
+            if key == 'external_input': ext_input = val
+            if key == 'x_noise': x_noise = val
+            if key == 'y_noise': y_noise = val
+            
         # Shifts the input signal by one time step to create a delayed input signal
         self.inputs = np.roll(self.inputs, -1, axis=2)
-        self.inputs[:,:,-1] = u
-        systemInput = self.inputs[:,:,0]
+        self.inputs[:,:,-1] = input_signal
+        system_input = self.inputs[:,:,0]
 
         # Applies limitations to the states before calculating the next states using the system dynamics
         x = self._limitations(self.states, 0)
         
         # Defines a handle function for calculating the system dynamics
-        handleDyn = lambda xx: self._dynamics(xx, systemInput, self.synapseCurrent)
+        handle_dyn = lambda xx: self._dynamics(xx, system_input, self.synapses_current)
         
         # Calculates the states and outputs using the system dynamics
-        if self.__class__.timeType == 'c':
+        if self.time_type == 'c':
             # For continuous-time systems, the solver type can be controlled by changing it in the model file or through `solver` option
             
-            x = super().dynamicRunner(handleDyn, x, x, self.sampleTime, self.solverType)
+            x = super().dynamic_runner(handle_dyn, x, x, self.sample_time, self.solver_type)
         else:
             # For discrete-time systems, only the dynamic must be solved
-            x = handleDyn(x)
+            x = handle_dyn(x)
         
         # Enforces restrictions on the states after computing the next states using the system dynamics
         x = self._limitations(x, 1)
         
         # Computes the system output using the measurement dynamics specified in the model file or other relevant files
-        y = self._measurements(x, u, self.synapseCurrent)
+        y = self._measurements(x, system_input, self.synapses_current)
 
         # Calculates interconnections and currents of synapses here
-        if self.__enSyn == True:
-            if outInput == False: outInput = self.inputs[:,:,-1]*0
-            self.synapseCurrent = self._synapses(x, outInput, self.pre, self.post)
+        if self.enable_synapses == True:
+            self.synapses_current = self._synapses(x, self.pre, self.post, ext_input)
         
         # Updates internal signals
-        self.states  = x + xNoise
-        self.outputs = y + yNoise
+        self.states  = x + x_noise
+        self.outputs = y + y_noise
     # End of function
 
     def __repr__(self):
-        return f"** {self.__class__.__name__} **\nNumber of elements: {self.numberNeurons}\nSolver Type: '{self.solverType}'"
+        return f"** {self.__name__} **\nNumber of elements: {self.n_neurons}\nSolver Type: '{self.solver_type}'"
 # End of class
 
 
-class nonlinear(solverCore):
-    def __init__(self, timeline, **kwargs):
+class Nonlinear(SolverCore):
+    def __init__(self, time_line, **kwargs):
         '''
         ### Overview:
         This class provides tools to create a nonlinear system with 
@@ -258,53 +290,52 @@ class nonlinear(solverCore):
         * `solver` sets the type of solver; e.g., `euler`, `rng4`, etc.
         * `estimator` specifies whether this block should be an estimator. To do this, set it to `True`.
         * `approach` specifies the type of estimator - `ekf` or `ukf`.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
-        self.timeLine      = np.reshape(timeline, (1, -1))
-        self.sampleTime    = np.mean(self.timeLine[0, 1:-1] - self.timeLine[0, 0:-2])
-        self.numSteps      = np.size(self.timeLine)     # The number of sample steps
-        self.solverType    = self.__class__.solverType  # The type of dynamic solver
-        self.currentStep   = 0                          # The current step of simulation
-        self.initialStates = self.__class__.initialStates
-        self.inputs        = np.zeros([self.__class__.numInputs,  self.numSteps])
-        self.outputs       = np.zeros([self.__class__.numOutputs, self.numSteps])
-        self.states        = np.zeros([self.__class__.numStates,  self.numSteps + 1])
-        self.states[:, 0]  = self.initialStates.flatten()
-        self.estimator     = False
-        estAproach         = 'ekf'
-
+        self.time_line = np.reshape(time_line, (1, -1))
+        self.sample_time = np.mean(self.time_line[0, 1:-1] - self.time_line[0, 0:-2])
+        self.n_steps = np.size(self.time_line) # The number of sample steps
+        self.solver_type = self.solver_type # The type of dynamic solver
+        self.current_step = 0 # The current step of simulation
+        self.inputs = np.zeros([self.n_inputs,  self.n_steps])
+        self.outputs = np.zeros([self.n_outputs, self.n_steps])
+        self.states = np.zeros([self.n_states,  self.n_steps + 1])
+        self.states[:, 0] = self.initial_states.flatten()
+        self.estimator = False
+        
+        est_approach = 'ekf'
         # Retrieving the arbitrary value of properties
         for key, val in kwargs.items():
             # The initial condition
             if key == 'initial': self.states[:, 0] = np.array(val).flatten()
             # The estimation approach
-            if key == 'approach': estAproach = val
+            if key == 'approach': est_approach = val
             # Type of dynamic solver
-            if key == 'solver': self.solverType = val
+            if key == 'solver': self.solver_type = val
             # If it is an estimator
             if key == 'estimator': self.estimator = True
         
         # This section initializes the estimator by setting parameters
         if self.estimator == True:
-            self.covariance = self.__class__.covariance
-            self.estAproach = estAproach # The estimation approach ('ekf', 'ukf', ...)
-            if self.estAproach == 'ekf':
-                self.qMatrix = self.__class__.qMatrix
-                self.rMatrix = self.__class__.rMatrix
-            elif self.estAproach == 'ukf':
-                self.qMatrix = self.__class__.qMatrix
-                self.rMatrix = self.__class__.rMatrix
-                self.kappa   = self.__class__.kappa
-                self.alpha   = self.__class__.alpha
+            self.est_approach = est_approach # The estimation approach ('ekf', 'ukf', ...)
+            if self.est_approach == 'ekf':
+                pass
+            elif self.est_approach == 'ukf':
                 # Dependent variables
-                self.nUKF    = self.__class__.numStates
-                self.lambd   = np.power(self.alpha,2)*(self.nUKF + self.kappa) - self.nUKF
-                self.betta   = 2
+                self.n_ukf = self.num_states
+                self.lambd = np.power(self.alpha,2)*(self.n_ukf + self.kappa) - self.n_ukf
+                self.betta = 2
                 # Creating weights
-                self.wm      = np.ones([2*self.nUKF + 1, 1])/(2*(self.nUKF + self.lambd))
-                self.wc      = self.wm
+                self.wm = np.ones([2*self.n_ukf + 1, 1])/(2*(self.n_ukf + self.lambd))
+                self.wc = self.wm
                 self.wc[0,0] = self.wm[0,0] + (1 - np.power(self.alpha,2) + self.betta)
+        # Comment & diary
+        Clib.diary('"' + self.name + '" has been created.')
 
-    def __call__(self, u, xNoise = 0, yNoise = 0):
+    def __call__(self, input_signal, x_noise = 0, y_noise = 0):
         '''
         ### Overview:
         Utilizing current data, this function can furnish a `prediction` of the subsequent step.
@@ -313,61 +344,63 @@ class nonlinear(solverCore):
         * Input array at step `k`
         * Internal additive noise incorporated into the states
         * External additive noise incorporated into the measurements
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
         if self.estimator == True: return 0
 
         # The current time is calculated as follows
-        currentTime = self.timeLine[0, self.currentStep]
+        current_time = self.time_line[0, self.current_step]
         
         # Preparing the input signal and saving it to the internal array
-        self.inputs[:, self.currentStep] = u
+        self.inputs[:, self.current_step] = input_signal
         
         # Establishing before-state-limitations:
         # This can be employed if we desire to process states prior to computing the subsequent states utilizing dynamics.
-        xv = self.__class__._limitations(self.__class__, self.states, 0)
+        xv = self._limitations(self.states, 0)
         
         # Retrieving the antecedent states
-        xo = self.states[:, self.currentStep]
+        xo = self.states[:, self.current_step]
         xo = np.reshape(xo, (-1, 1))
         
         # The handle function below is utilized in the following
-        handleDyn = lambda xx: self.__class__._dynamics(self.__class__,
-                                                   xx,
-                                                   self.inputs,
-                                                   self.currentStep,
-                                                   self.sampleTime,
-                                                   currentTime)
+        handle_dyn = lambda xx: self._dynamics(xx,
+                                            self.inputs,
+                                            self.current_step,
+                                            self.sample_time,
+                                            current_time)
         
         # This section computes the states and outputs utilizing the system dynamics
-        if self.__class__.timeType == 'c':
+        if self.time_type == 'c':
             # The type of solver can be manipulated To alter your solver type,
             # do not modify any code here Modify the solver type in the model file
-            x = super().dynamicRunner(handleDyn, xv, xo, self.sampleTime, self.solverType)
+            x = super().dynamic_runner(handle_dyn, xv, xo, self.sample_time, self.solver_type)
         else:
             # When the inserted system is discrete time, only the dynamic must be solved as below
-            x = handleDyn(xv)
+            x = handle_dyn(xv)
         
         # Establishing after-state-limitations
-        x = self.__class__._limitations(self.__class__, x, 1)
+        x = self._limitations(x, 1)
         
         # The system output is computed by the measurement dynamics of the system
         # which are available in the 'chaos.m' file
-        y = self.__class__._measurements(self.__class__,
-                                    self.states,
-                                    self.inputs,
-                                    self.currentStep,
-                                    self.sampleTime,
-                                    currentTime)
+        y = self._measurements(self.states,
+                            self.inputs,
+                            self.current_step,
+                            self.sample_time,
+                            current_time)
         
         # Updating internal signals
-        self.states[:, self.currentStep + 1] = x.flatten() + xNoise
-        self.outputs[:, self.currentStep]    = y.flatten() + yNoise
-        self.currentStep += 1
+        self.states[:, self.current_step + 1] = x.flatten() + x_noise
+        self.outputs[:, self.current_step] = y.flatten() + y_noise
+        self.current_step += 1
     # End of function
 
     # The 'estimate' function can furnish an effortless method to invoke
     # the system dynamics to compute subsequent sample states.
-    def estimate(self, u, y):
+    def estimate(self, input_signal, output_signal):
         '''
         ### Overview:
         Utilizing current data, this function can estimate a subsequent step.
@@ -375,73 +408,75 @@ class nonlinear(solverCore):
         ### Input variables:
         * Input array of the actual system at step `k`
         * Output array of the actual system at step `k`
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
         if self.estimator == False: return 0
 
-        if self.estAproach == 'ekf':
-            self.__nextstepEKF(u, y)
-        elif self.estAproach == 'ukf':
-            self.__nextstepUKF(u, y)
+        if self.est_approach == 'ekf':
+            self.__nextstepEKF(input_signal, output_signal)
+        elif self.est_approach == 'ukf':
+            self.__nextstepUKF(input_signal, output_signal)
 
     ## Subsequent step of Extended Kalman Filter (EKF)
-    def __nextstepEKF(self, u, y):
+    def __nextstepEKF(self, input_signal, output_signal):
         # [Internal update] <- (Internal, Input, Output)
         
         ## Initializing parameters
         # The current time is computed as follows
-        currentTime = self.timeLine[0, self.currentStep]
+        current_time = self.time_line[0, self.current_step]
         # Preparing and storing inputs and outputs within internal
-        self.inputs[:, self.currentStep]  = u
-        self.outputs[:, self.currentStep] = y
-        y = np.reshape(y, (-1, 1))
+        self.inputs[:, self.current_step] = input_signal
+        self.outputs[:, self.current_step] = output_signal
+        output_signal = np.reshape(output_signal, (-1, 1))
         
         # Employing system dynamics to compute Jacobians
-        [A, L, H, M] = self.__class__._jacobians(self.__class__,
-                                                self.states,
-                                                self.inputs,
-                                                self.currentStep,
-                                                self.sampleTime,
-                                                currentTime)
+        [A, L, H, M] = self._jacobians(self.states,
+                                        self.inputs,
+                                        self.current_step,
+                                        self.sample_time,
+                                        current_time)
         ## Prediction step - Updating xp
         #  This section endeavors to obtain a prediction estimate from the dynamic
         #  model of your system directly from nonlinear equations
-        xm = self.states[:, self.currentStep]
+        xm = self.states[:, self.current_step]
         xm = np.reshape(xm, (-1, 1))
 
         # Calculation before-state-limitations
-        xv  = self.__class__._limitations(self.__class__, self.states, 0)
+        xv  = self._limitations(self.states, 0)
         
         # The handle function below is employed in the following
-        handleDyn = lambda xx: self.__class__._dynamics(self.__class__,
-                                                        xx,
-                                                        self.inputs,
-                                                        self.currentStep,
-                                                        self.sampleTime,
-                                                        currentTime)
+        handle_dyn = lambda xx: self._dynamics(xx,
+                                            self.inputs,
+                                            self.current_step,
+                                            self.sample_time,
+                                            current_time)
         # Compute states and outputs using system dynamics
-        if self.__class__.timeType == 'c':
+        if self.time_type == 'c':
             # Change the solver type in the block class instead of modifying the code here
-            xp = super().dynamicRunner(handleDyn, xv, xm, self.sampleTime, self.solverType)
+            xp = super().dynamic_runner(handle_dyn, xv, xm, self.sample_time, self.solver_type)
         else:
             # For discrete-time systems, solve the dynamic as shown below
-            xp = handleDyn(xv)
+            xp = handle_dyn(xv)
 
         # Apply after-state limitations
-        xp = self.__class__._limitations(self.__class__, xp, 1)
+        xp = self._limitations(xp, 1)
         
         # Prediction step - update covariance matrix
         Pp = A.dot(self.covariance).dot(A.transpose()) + \
-             L.dot(self.qMatrix).dot(L.transpose())
+             L.dot(self.q_matrix).dot(L.transpose())
         
         # Posterior step - receive measurements
         # If there are no measurements (y == NaN), only the prediction will be reported
-        if not np.any(np.isnan(y)):
+        if not np.any(np.isnan(output_signal)):
             # Calculate Kalman Gain
             K  = (Pp.dot(H.transpose())).dot(                  \
                   np.linalg.inv(H.dot(Pp).dot(H.transpose()) + \
-                  M.dot(self.rMatrix).dot(M.transpose())) )
+                  M.dot(self.r_matrix).dot(M.transpose())) )
             # Update states
-            xm = xp + K.dot(y - H.dot(xp))
+            xm = xp + K.dot(output_signal - H.dot(xp))
             # Update covariance matrix
             Pm = (np.eye(self.covariance.shape[0]) - K.dot(H)).dot(Pp)
         else:
@@ -449,12 +484,12 @@ class nonlinear(solverCore):
             Pm = Pp
         
         ## Update internal signals
-        self.states[:, self.currentStep + 1] = xm.flatten() # Save estimated states
-        self.covariance                      = Pm           # Save covariance matrix
-        self.currentStep += 1                               # Move to next step
+        self.states[:, self.current_step + 1] = xm.flatten() # Save estimated states
+        self.covariance = Pm # Save covariance matrix
+        self.current_step += 1 # Move to next step
     
     ## Next step of Unscented Kalman Filter (UKF)
-    def __nextstepUKF(self, u, y):
+    def __nextstepUKF(self, input_signal, output_signal):
         # [Internal update] <- (Internal, Input, Output)
         # ------------------------------------------------------
         # To see how this algorithm works, refer to below source:
@@ -467,26 +502,25 @@ class nonlinear(solverCore):
         
         ## Initialize parameters - STEP 0 & 1
         # Calculate current time
-        currentTime = self.timeLine[0, self.currentStep]
+        current_time = self.time_line[0, self.current_step]
         # Prepare and save inputs and outputs to internal variables
-        self.inputs[:, self.currentStep]  = u
-        self.outputs[:, self.currentStep] = y
-        y = np.reshape(y, (-1, 1))
+        self.inputs[:, self.current_step] = input_signal
+        self.outputs[:, self.current_step] = output_signal
+        output_signal = np.reshape(output_signal, (-1, 1))
         # Calculate Jacobians using system dynamics
-        [A, L, H, M] = self.__class__._jacobians(self.__class__,
-                                                self.states,
-                                                self.inputs,
-                                                self.currentStep,
-                                                self.sampleTime,
-                                                currentTime)
+        [A, L, H, M] = self._jacobians(self.states,
+                                        self.inputs,
+                                        self.current_step,
+                                        self.sample_time,
+                                        current_time)
         # Get last states prior and its covariance
-        xm = self.states[:, self.currentStep]
+        xm = self.states[:, self.current_step]
         xm = np.reshape(xm, (-1, 1))
         Pm = self.covariance
         
         # Solve sigma points - STEP 2
         # Calculate square root
-        dSigma = np.sqrt(self.nUKF + self.lambd)*((np.linalg.cholesky(Pm)).transpose())
+        dSigma = np.sqrt(self.n_ukf + self.lambd)*((np.linalg.cholesky(Pm)).transpose())
         # Copy 'xm' to some column
         xmCopy = xm[:, np.int8(np.zeros([1, np.size(xm)]).flatten())]
         # Obtain sigma points
@@ -495,32 +529,31 @@ class nonlinear(solverCore):
         ## Predict states and their covariance - STEP 3
         # Obtain prediction estimate from dynamic model of system using nonlinear equations
         nSpoints = sp.shape[1]
-        xp       = np.zeros([self.__class__.numStates, 1])
-        Xp       = np.zeros([self.__class__.numStates, nSpoints])
+        xp = np.zeros([self.n_states, 1])
+        Xp = np.zeros([self.n_states, nSpoints])
         for i in range(0, nSpoints):
-            changedFullState = self.states
-            changedFullState[:, self.currentStep] = sp[:, i]
+            changed_full_state = self.states
+            changed_full_state[:, self.current_step] = sp[:, i]
             
             # Apply before-state limitations
-            xv  = self.__class__._limitations(self.__class__, changedFullState, 0)
+            xv  = self._limitations(changed_full_state, 0)
             # Use handle function below to prevent redundancy
-            handleDyn = lambda xx: self.__class__._dynamics(self.__class__,
-                                                            xx,
-                                                            self.inputs,
-                                                            self.currentStep,
-                                                            self.sampleTime,
-                                                            currentTime)
-            if self.__class__.timeType == 'c':
-                Xp[:,i] = super().dynamicRunner(handleDyn,
+            handle_dyn = lambda xx: self._dynamics(xx,
+                                                self.inputs,
+                                                self.current_step,
+                                                self.sample_time,
+                                                current_time)
+            if self.time_type == 'c':
+                Xp[:,i] = super().dynamic_runner(handle_dyn,
                                                 xv,
                                                 xm,
-                                                self.sampleTime,
-                                                self.solverType).flatten()
+                                                self.sample_time,
+                                                self.solver_type).flatten()
             else:
-                Xp[:,i] = handleDyn(xv)
+                Xp[:,i] = handle_dyn(xv)
             
             # Apply after-state limitations
-            Xp[:,i] = self.__class__._limitations(self.__class__, Xp[:,i], 1)
+            Xp[:,i] = self._limitations(Xp[:,i], 1)
             # Update prediction
             temp1 = Xp[:, i]
             xp = xp + self.wm[i,0]*(np.reshape(temp1, (-1, 1)))
@@ -529,29 +562,28 @@ class nonlinear(solverCore):
         dPp = Xp - xp[:, np.int8(np.zeros([1, np.size(nSpoints)])).flatten()]
         # Update covariance of states matrix
         Pp  = dPp.dot(np.diag(self.wc.flatten())).dot(dPp.transpose()) + \
-              L.dot(self.qMatrix).dot(L.transpose())
+              L.dot(self.q_matrix).dot(L.transpose())
         
         ## Update sigma points - STEP 4
-        # dSigma = np.sqrt(self.nUKF + self.lambd).dot( \
+        # dSigma = np.sqrt(self.n_ukf + self.lambd).dot( \
         #         (np.linalg.cholesky(Pp)).transpose()) # Calculate square root
         # Putting 'xp' is some column (copy)
         # xmCopy = xp[:, np.int8(np.zeros([1, np.size(xp)]))]
         # sp     = np.concatenate((xp, xmCopy + dSigma, xmCopy - dSigma), axis=1)
         
-        if not np.any(np.isnan(y)):
+        if not np.any(np.isnan(output_signal)):
             ## Solve output estimation using predicted data - STEP 5
             # Obtain prediction output from sigma points
-            zb = np.zeros([self.__class__.numOutputs, 1])
-            Zb = np.zeros([self.__class__.numOutputs, nSpoints])
+            zb = np.zeros([self.n_outputs, 1])
+            Zb = np.zeros([self.n_outputs, nSpoints])
             for i in range(0, nSpoints):
-                changedFullState = self.states
-                changedFullState[:, self.currentStep] = Xp[:, i] #Or 'Xp[:, i]' instead of 'sp[:, i]'
-                Zb[:,i] = self.__class__._measurements(self.__class__,    \
-                                                        changedFullState, \
-                                                        self.inputs,      \
-                                                        self.currentStep, \
-                                                        self.sampleTime,  \
-                                                        currentTime).flatten()
+                changed_full_state = self.states
+                changed_full_state[:, self.current_step] = Xp[:, i] #Or 'Xp[:, i]' instead of 'sp[:, i]'
+                Zb[:,i] = self._measurements(changed_full_state,
+                                            self.inputs,
+                                            self.current_step,
+                                            self.sample_time,
+                                            current_time).flatten()
                 # Predicted output
                 temp1 = Zb[:, i]
                 zb = zb + self.wm[i,0]*(np.reshape(temp1, (-1, 1)))
@@ -559,19 +591,19 @@ class nonlinear(solverCore):
 
             dSt = Zb - zb[:, np.int8(np.zeros([1, np.size(nSpoints)])).flatten()]
             # Update covariance of output matrix
-            St  = dSt.dot(np.diag(self.wc.flatten())).dot(dSt.transpose()) + \
-                  M.dot(self.rMatrix).dot(M.transpose())
+            St = dSt.dot(np.diag(self.wc.flatten())).dot(dSt.transpose()) + \
+                  M.dot(self.r_matrix).dot(M.transpose())
 
             ## Solve Kalman gain - STEP 6
             SiG = dPp.dot(np.diag(self.wc.flatten())).dot(dSt.transpose())
             # Calculate Kalman Gain
-            K   = SiG.dot(np.linalg.inv(St))
+            K = SiG.dot(np.linalg.inv(St))
         
         ## Solve posterior using measurement data - STEP 7
-        # If there are no measurements (y == NaN), only the prediction will be reported
-        if not np.any(np.isnan(y)):
+        # If there are no measurements (output_signal == NaN), only the prediction will be reported
+        if not np.any(np.isnan(output_signal)):
             # Update states
-            xm = xp + K.dot(y - zb)
+            xm = xp + K.dot(output_signal - zb)
             # Update covariance matrix
             Pm = Pp - K.dot(SiG.transpose())
         else:
@@ -579,9 +611,9 @@ class nonlinear(solverCore):
             Pm = Pp
         
         ## Update internal signals
-        self.states[:, self.currentStep + 1] = xm.flatten() # Save estimated states
-        self.covariance                      = Pm           # Save covariance matrix
-        self.currentStep += 1                               # Move to next step
+        self.states[:, self.current_step + 1] = xm.flatten() # Save estimated states
+        self.covariance = Pm # Save covariance matrix
+        self.current_step += 1 # Move to next step
     # End of function
 
     # Function to jump in the step variable
@@ -593,19 +625,27 @@ class nonlinear(solverCore):
 
         ### Input variables:
         * how many steps you would like me to jump?; default is `1`
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
-        self.currentStep = self.currentStep + i
+        self.current_step = self.current_step + i
     
     # Reset Block by changing current step to zero
     def reset(self):
         '''
         ### Overview:
         Reseting the block via changing the current step to zero.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
-        self.currentStep = 0
+        self.current_step = 0
         
     # The below function is used to plot the internal signals
-    def show(self, params, sel = 'x', **kwargs):
+    def show(self, params, what = 'x', **kwargs):
         '''
         ### Overview:
         This function makes a quick plot of internal signals.
@@ -630,25 +670,29 @@ class nonlinear(solverCore):
             * `lineWidth` - set line width
             * `grid` - enable grid on plot (`True` or `False`)
             * `legCol` - control number of columns in legend (positive integer)
+            
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
         '''
         # To illustrate states, inputs, or outputs, you might have to
         # use some varargins which are explained in 'scope' class
-        if sel == 'x':
-            signal   = self.states[:, 0:self.numSteps]
-            nSignals = self.__class__.numStates
-        elif sel == 'y':
-            signal   = self.outputs[:, 0:self.numSteps]
-            nSignals = self.__class__.numOutputs
-        elif sel == 'u':
-            signal   = self.inputs[:, 0:self.numSteps]
-            nSignals = self.__class__.numInputs
+        if what == 'x':
+            signal = self.states[:, 0:self.n_steps]
+            n_signals = self.n_states
+        elif what == 'y':
+            signal = self.outputs[:, 0:self.n_steps]
+            n_signals = self.n_outputs
+        elif what == 'u':
+            signal = self.inputs[:, 0:self.n_steps]
+            n_signals = self.n_inputs
         # Make a scope
-        scp = scope(self.timeLine, nSignals, initial=signal)
+        scp = Scope(self.time_line, n_signals, initial=signal)
 
-        scp.show(params, title=self.__class__.name, **kwargs)
+        scp.show(params, title=self.name, **kwargs)
     # End of function
     
     def __repr__(self):
-        return f"** {self.__class__.__name__} **\nCurrent point: {self.currentStep}/{self.numSteps}\nSolver Type: '{self.solverType}'"
+        return f"** {self.__name__} **\nCurrent point: {self.current_step}/{self.n_steps}\nSolver Type: '{self.solver_type}'"
 # End of class
 

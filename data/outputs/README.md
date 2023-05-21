@@ -1,4 +1,5 @@
-# Faryadell Simulation Framework (SFS)
-Creator: Abolfazl Delavar - Web: https://github.com/abolfazldelavar
+# Dynamic Runner (DYRUN)
+Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+ - Web: https://github.com/abolfazldelavar/dyrun
 
-All exports, images, and saving information should be saved in this folder. This approach could be helpful to make your output data more organized.
+Save all exports, images, and output data in this folder. This approach can help you keep your output data more organized.

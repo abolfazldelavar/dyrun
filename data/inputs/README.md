@@ -1,4 +1,5 @@
-# Faryadell Simulation Framework (SFS)
-Creator: Abolfazl Delavar - Web: https://github.com/abolfazldelavar
+# Dynamic Runner (DYRUN)
+Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+ - Web: https://github.com/abolfazldelavar/dyrun
 
-This directory is a place that you can copy your data files and use them in the project. Note that this might be so useful to manage your files when you have got many files to work.
+This directory provides a place where you can copy your data files and use them in the project. It's a convenient way to manage your files, especially when you have many files to work with.
