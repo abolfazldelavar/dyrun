@@ -113,7 +113,7 @@ class Scope():
         
         # Update internal signals which later can be used for plotting
         # and programming for other parts of the code
-        self.signals[:, self.current_step] = data.flatten() + noise_signal.flatten()
+        self.signals[:, self.current_step] = np.array(data).flatten() + noise_signal.flatten()
         self.current_step += 1
         
     # The 'save' function saves the internal data.

@@ -185,7 +185,7 @@ class NonlinearGroup(SolverCore):
         self.sample_time = sample_time # The simulation sample time
         self.n_neurons = n_neurons # The number of neurons (Network size)
         self.solver_type = solver_type  # The type of dynamic solver
-        self.initial_states = np.reshape(self.initial_states, (-1, 1))
+        self.initial_states = np.array(self.initial_states).reshape(-1, 1)
         self.synapses_current = np.zeros([self.n_synapses_signal, self.n_neurons])
         self.inputs = np.zeros([self.n_inputs,  self.n_neurons, self.delay + 1])
         self.outputs = np.zeros([self.n_outputs, self.n_neurons])
@@ -303,7 +303,7 @@ class Nonlinear(SolverCore):
         self.inputs = np.zeros([self.n_inputs,  self.n_steps])
         self.outputs = np.zeros([self.n_outputs, self.n_steps])
         self.states = np.zeros([self.n_states,  self.n_steps + 1])
-        self.states[:, 0] = self.initial_states.flatten()
+        self.states[:, 0] = np.array(self.initial_states).flatten()
         self.estimator = False
         
         est_approach = 'ekf'
@@ -689,6 +689,12 @@ class Nonlinear(SolverCore):
         # Make a scope
         scp = Scope(self.time_line, n_signals, initial=signal)
 
+        # If title is set
+        for key, val in kwargs.items():
+            if key == 'title':
+                scp.show(params, **kwargs)
+                return
+        # Else plot the name of the model as the plot title
         scp.show(params, title=self.name, **kwargs)
     # End of function
     

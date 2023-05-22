@@ -25,7 +25,7 @@ class QuadrupleTank(Nonlinear):
     n_outputs = 2 # Number of outputs
     time_type = 'c' # 'c' -> Continuous, 'd' -> Discrete
     solver_type = 'euler' # 'euler', 'rng4'
-    initial_states = np.ones([4,1]) # Initial value of states
+    initial_states = [0, 0, 0, 0] # Initial value of states
     
     # EXTENTED KALMAN FILTER --------
     covariance = 1e+3*np.eye(4) # Covariance of states
@@ -148,7 +148,7 @@ class Lorenz(Nonlinear):
     n_outputs = 2 # The number of outputs
     time_type = 'c' # 'c' -> Continuous, 'd' -> Discrete
     solver_type = 'euler' # 'euler', 'rng4'
-    initial_states = np.ones([3,1]) # Initial value of states
+    initial_states = [1, 1, 1] # Initial value of states
     
     # EXTENTED KALMAN FILTER --------
     covariance = 1e+3*np.eye(3) # Covariance of states
