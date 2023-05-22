@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'dyrun',
-    version = '1.1.01',
+    version = '1.1.11',
     author = 'Abolfazl Delavar',
     author_email = 'faryadell@gmail.com',
     description = 'Easy way to simulation',
@@ -22,7 +22,7 @@ setup(
     include_package_data = True,
     entry_points = {
         'console_scripts': [
-            'dyrun new=dyrun.cli:build_cmd'
+            'dyrun=dyrun.cli:build_cmd'
         ]
     }
 )
