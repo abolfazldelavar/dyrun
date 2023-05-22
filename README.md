@@ -1,4 +1,4 @@
-<img src="https://github.com/abolfazldelavar/dyrun/blob/main/data/logo.png?raw=true" align="right" width="300" alt="header pic"/>
+<img src="https://github.com/abolfazldelavar/dyrun/blob/main/dyrun/data/logo.png?raw=true" align="right" width="300" alt="header pic"/>
 
 # Dynamic Runner (DYRUN)
 
