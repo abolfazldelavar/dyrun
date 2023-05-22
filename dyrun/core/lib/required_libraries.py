@@ -223,7 +223,7 @@ from control import *
 # computer vision tasks, such as object detection and tracking.
 
 # %%
-from cv2 import imread, cvtColor, COLOR_BGR2GRAY
+# from cv2 import imread, cvtColor, COLOR_BGR2GRAY
 
 # %% [markdown]
 # ## Neuroscience

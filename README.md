@@ -27,9 +27,15 @@ Abolfazl Delavar
 
 ## Installation
 
-To download full package, run the below code:
+To install the full package, run the below code:
 
-`Comming soon ...`
+`pip install dyrun`
+
+To build a new project, just run the following order:
+
+`dyrun DIR_NAME`
+
+where the **DIR_NAME** denotes the folder you wish to create the project.
 
 ## First trying
 

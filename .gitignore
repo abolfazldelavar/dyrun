@@ -16,3 +16,8 @@ local
 
 # all PDF files are ignored
 *.pdf
+
+# PyPI ignore
+build
+dist
+syrun.egg-info
