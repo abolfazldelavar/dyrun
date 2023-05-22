@@ -593,7 +593,7 @@ class Clib():
 
     ## Loading tensors - .npy
     @staticmethod
-    def load_npy(name, **kwargs):
+    def load_npy(name):
         '''
         ### Overview:
         Loading the content of the given `.npy` file.

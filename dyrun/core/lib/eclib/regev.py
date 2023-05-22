@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-from eclib.numutils import *
-from eclib.randutils import *
-from eclib.primeutils import *
-from eclib.modutils import *
+from core.lib.eclib.numutils import *
+from core.lib.eclib.randutils import *
+from core.lib.eclib.primeutils import *
+from core.lib.eclib.modutils import *
 from collections import namedtuple
 import numpy as np
 from math import floor, ceil, log2

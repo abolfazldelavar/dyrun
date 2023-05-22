@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
 # from eclib import regev, gsw
-import regev, gsw
+import core.lib.eclib.regev as regev
+import core.lib.eclib.gsw as gsw
 from core.lib.eclib.numutils import *
 from core.lib.eclib.randutils import *
 from core.lib.eclib.primeutils import *
