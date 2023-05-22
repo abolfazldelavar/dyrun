@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 # %% [markdown]
-# <img src="https://github.com/abolfazldelavar/dyrun/blob/main/dyrun/data/logo.png?raw=true" align="right" width="250" alt="header pic"/>
+# <img src="https://github.com/abolfazldelavar/dyrun/blob/main/logo.png?raw=true" align="right" width="250" alt="header pic"/>
 # 
 # # DYNAMIC RUNNER
 # **Dynamic Runner** or `dyrun` is a simple tool that facilitates simulations expeditiously and effortlessly, using invaluable instruments for modeling linear and nonlinear dynamic systems, irrespective of their time dependence or independence. This formidable instrument is capable of executing **dynamic mathematical models** and is advantageous for control engineering applications, estimation, and prediction. Moreover, it is applicable to Machine Learning and AI domains, including neural networks. Researchers who wish to delve into the realm of dynamic and control systems will find this package to be an invaluable resource. Enjoy!
