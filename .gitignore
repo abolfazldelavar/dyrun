@@ -20,4 +20,4 @@ local
 # PyPI ignore
 build
 dist
-syrun.egg-info
+dyrun.egg-info

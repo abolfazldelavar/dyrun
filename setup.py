@@ -15,7 +15,7 @@ setup(
     keywords=['Control', 'Simulation', 'Academic', 'Mathematics', 'Differential', 'Closed-loop', 'Numberical calculation'],
     classifiers = [
         'Programming Language :: Python :: 3',
-        'License :: OSI Approved:: MIT License',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ],
     python_requires = '>=3.6',
