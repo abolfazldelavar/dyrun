@@ -36,7 +36,7 @@ pip install dyrun
 To build a new project, just run the following order:
 
 ```
-dyrun DIR_NAME
+dyrun new DIR_NAME
 ```
 
 If the package has been installed, you can update it by:
