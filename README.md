@@ -66,52 +66,52 @@ The notebook is organized into the following sections: **Introduction:**, **Requ
 The notebook is designed to be self-contained and easy to follow, even for users who are new to dynamic simulations and the `dyrun` library.
 The only effort you must make is to read the instruction presented in `dyrun.ipynb` and this guideline.
 
-<details>
+<details open>
     <summary><h3> Introduction </h3></summary>
     A brief overview of the *dyrun* library and its main features.
 </details>
 
-<details>
+<details open>
     <summary><h3> Requirements </h3></summary>
     The external dependencies utilized in the project are documented in this section.
 </details>
 
-<details>
+<details open>
     <summary><h3> Custom Functions </h3></summary>
     Any custom functions for the project are defined in this section.
 </details>
 
-<details>
+<details open>
     <summary><h3> Parameters </h3></summary>
     This section establishes the static quantities such as model parameters used throughout the entire project.
 </details>
 
-<details>
+<details open>
     <summary><h3> Signals </h3></summary>
     This section is designated for the definition of any signals and array variables.
 </details>
 
-<details>
+<details open>
     <summary><h3> Models </h3></summary>
     Dynamic objects and those that are not as elementary as an array must be included in this section.
 </details>
 
-<details>
+<details open>
     <summary><h3> Main </h3></summary>
     This section contains the simulation function that is used to run the project.
 </details>
 
-<details>
+<details open>
     <summary><h3> Execution </h3></summary>
     This section contains the code snippet to run the project.
 </details>
 
-<details>
+<details open>
     <summary><h3> Illustration </h3></summary>
     This section is used to display the results of the simulation.
 </details>
 
-<details>
+<details open>
     <summary><h3> Preservation </h3></summary>
     This section is used to store data.
 </details>
@@ -125,7 +125,7 @@ The file named `core/lib/required_libraries.py` is where the crucial requirement
 
 In this section, all available libraries that can be utilized for better managing your projects are given.
 
-<details>
+<details open>
     <summary><h2> `Clib` </h2></summary>
   
 This pre-imported library which you can find it in the **requirements** section of the `dyrun.ipynb`, brings you several useful functions, which will be elaborated now:
@@ -206,7 +206,7 @@ Certainly! Here are the revised instructions for the `Clib` class, which provide
 To use these functions, you can call them as static methods of the `Clib` class. For example, to save a tensor, you can call `Clib.save_npy(tensor, name)`, where `tensor` is the data to be saved, and `name` is the path and name of the file to be saved.
 </details>
 
-<details>
+<details open>
     <summary> <h2> `Plib` </h2></summary>
   
 This pre-imported library which you can find it in the **requirements** section of the `dyrun.ipynb`, provides several practical functions related to illustration purposes. The following methods are available:
@@ -249,7 +249,7 @@ To use these functions, you can call them as static methods of the `Plib` class,
 </details>
 
 
-<details>
+<details open>
     <summary> <h2> `eclib` </h2></summary>
     This is a Python library for numerical simulation of encrypted control.
     You have to import the library you need in the requirements section. For instance, to utilize `Paillier`, insert `import core.lib.eclib.paillier as pai` and use `pai` in the whole project.
@@ -262,15 +262,15 @@ To use these functions, you can call them as static methods of the `Plib` class,
 
 ## Questions
 
-<details>
+<details open>
     <summary> <h4> How to model an LTI system?</h4></summary>
 </details>
 
-<details>
+<details open>
     <summary> <h4> How to model a nonlinear system?</h4></summary>
 </details>
 
-<details>
+<details open>
     <summary> <h4> How to model a network including nonlinear agents?</h4></summary>
 </details>
 
