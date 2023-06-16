@@ -289,7 +289,7 @@ class Clib():
                             level=logging.INFO,
                             format='%(asctime)s %(filename)s, %(lineno)d, %(levelname)s: %(message)s')
         Clib.diary('--- DYNAMIC RUNNER PACKAGE ---')
-        Clib.diary('The simulation has kicked off! (' + Clib.get_now(5,'/') + ', ' + Clib.get_now(6,':') + ')')
+        Clib.diary(f'The simulation with ID={ID} has kicked off! (' + Clib.get_now(5,'/') + ', ' + Clib.get_now(6,':') + ')')
         sleep(0.5)
         # Send the current time to the output
         return time()
@@ -593,7 +593,7 @@ class Clib():
 
     ## Loading tensors - .npy
     @staticmethod
-    def load_npy(name):
+    def load_npy(name, **kwargs):
         '''
         ### Overview:
         Loading the content of the given `.npy` file.
@@ -612,7 +612,39 @@ class Clib():
         # Print the result of loading
         Clib.diary('The file named "' + name + '.npy" has been loaded.')
         return tensorData
+    
+    ## CDF to value
+    def cdf_value(signal, beta):
+        '''
+        ### Overview:
+        Obtaining the value in a stocastic signal corresponding to a special CDF value.
 
+        ### Input variables:
+        * `signal` - Stocastic signal
+        * `beta`- the supposing CDF between 0 and 1
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        from scipy import stats
+        signal = signal.flatten()
+        # Calculate the CDF of the signal
+        cdf = stats.cumfreq(signal, numbins=5000)
+        # Normalize the CDF
+        cdf = cdf.cumcount / len(signal)
+        # Calculate the midpoints of each bin
+        x_line = np.linspace(signal.min(), signal.max(), 5000)
+
+        if cdf.min() <= beta <= cdf.max():
+            idx = np.where(cdf >= beta)[0][0]
+        elif cdf.max() <= beta:
+            idx = 999
+        else:
+            idx = 0
+        value = x_line[idx]
+        return value
+    
     ## Delayed in a signal
     @staticmethod
     def delayed(signal, k, delay_steps):
@@ -844,7 +876,7 @@ class Plib():
 
 
     @staticmethod
-    def isi(params, fig = 0, save = False, width = 8.5, hw_ratio = 0.65):
+    def isi(params, fig = 0, save = False, width = 11, hw_ratio = 0.65):
         '''
         ### Description:
         Making plots prettier and ready to use in academic purposes.

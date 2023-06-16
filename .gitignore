@@ -21,3 +21,6 @@ local
 build
 dist
 dyrun.egg-info
+
+# Ignore test files
+test*

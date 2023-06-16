@@ -7,12 +7,12 @@
 
 # Import initial classes
 from core.lib.required_libraries import *
-from core.lib.core_library import SolverCore, Clib
+from core.lib.core_library import SolverCore, Clib, Structure
 from core.caller.scope_engine import Scope
 
 # Linear dynamics
 class LtiGroup():
-    def __init__(self, inserted_system, sample_time, **kwargs):
+    def __init__(self, inserted_system, **kwargs):
         '''
         ### Overview:
         This class facilitates the creation of a collection of LTI systems that may also have interactions.
@@ -20,10 +20,10 @@ class LtiGroup():
         a `tf()` or `ss()` from `control.matlab` extension.
 
         ### Input Parameters:
-        * System; for example, `tf([1], [1,2,3])`
-        * Sample Time
+        * System; for example, `tf([1], [1,2,3])` or (A, B, C, D)
 
         ### Configuration Options:
+        * `sample_time`: Defines the sample time of the simulation; default is `1`
         * `initial`: Specifies the initial state of the system
         * `replicate`: Determines the number of components; default value is `1`
         * `delay`: Defines the input delay in step scale; for example, `18` steps
@@ -33,39 +33,50 @@ class LtiGroup():
         Web page: https://github.com/abolfazldelavar/dyrun
         '''
         self.inserted_system = inserted_system
-        if inserted_system.dt == sample_time and type(inserted_system) == StateSpace:
-            # The input is a discrete-time state-space system with a consistent sample time.
-            self.system = inserted_system
-        elif inserted_system.dt == sample_time and type(inserted_system) == TransferFunction:
-            # The input is a discrete-time transfer function with a consistent sample time.
-            self.system = minreal(tf2ss(inserted_system))
-        elif type(inserted_system) == StateSpace:
-            if inserted_system.dt != 0:
-                # The input is a discrete-time state-space system with a different sample time.
-                # MATLAB code is: self.system = d2d(inserted_system, sample_time);
-                pass
-            else:
-                # The input is a continuous-time state-space system.
-                self.system = c2d(inserted_system, sample_time)
-        elif inserted_system.dt != 0:
-            # The input is a discrete-time transfer function with a different sample time.
-            # MATLAB code is: self.system = d2d(minreal(ss(inserted_system)), sample_time);
-            pass
-        else:
-            # The input is a continuous-time transfer function.
-            self.system = c2d(ss(inserted_system), sample_time)
-        
         initial_condition = [0]
         time_delay = 0
         n_systems = 1
+        name = 'LTI system'
+        sample_time = 1
         for key, val in kwargs.items():
-            # 'initial' specifies the initial value of the states
             if key == 'initial': initial_condition = val
-            # 'delay' specifies the input delay in seconds
             if key == 'delay': time_delay = val
-            # 'replicate' specifies the number of blocks
             if key == 'replicate': n_systems = val
+            if key == 'name': name = val
+            if key == 'sample_time': sample_time = val
+            
+        if isinstance(inserted_system, tuple):
+            self.system = Structure()
+            self.system.A = inserted_system[0]
+            self.system.B = inserted_system[1]
+            self.system.C = inserted_system[2]
+            self.system.D = inserted_system[3]
+            if inserted_system[3] == 0:
+                self.system.D = np.zeros((np.size(self.system.C, 0), np.size(self.system.B, 1)))
+        else:
+            if inserted_system.dt == sample_time and type(inserted_system) == LinearIOSystem:
+                # The input is a discrete-time state-space system with a consistent sample time.
+                self.system = inserted_system
+            elif inserted_system.dt == sample_time and type(inserted_system) == TransferFunction:
+                # The input is a discrete-time transfer function with a consistent sample time.
+                self.system = minreal(tf2ss(inserted_system))
+            elif type(inserted_system) == StateSpace:
+                if inserted_system.dt != 0:
+                    # The input is a discrete-time state-space system with a different sample time.
+                    # MATLAB code is: self.system = d2d(inserted_system, sample_time);
+                    pass
+                else:
+                    # The input is a continuous-time state-space system.
+                    self.system = c2d(inserted_system, sample_time)
+            elif inserted_system.dt != 0:
+                # The input is a discrete-time transfer function with a different sample time.
+                # MATLAB code is: self.system = d2d(minreal(ss(inserted_system)), sample_time);
+                pass
+            else:
+                # The input is a continuous-time transfer function.
+                self.system = c2d(ss(inserted_system), sample_time)
 
+        self.name = name
         self.number_ltis = n_systems # The number of LTI systems
         self.sample_time = sample_time # Simulation sample time
         self.A = self.system.A # Dynamic matrix A
@@ -97,7 +108,7 @@ class LtiGroup():
                 logging.error(err_text)
                 raise ValueError(err_text)
         # Comment and diary
-        Clib.diary('LTI system has been created.')
+        Clib.diary(f'{self.name} has been created.')
 
     def __call__(self, input_signal, x_noise = 0, y_noise = 0):
         '''
@@ -118,10 +129,10 @@ class LtiGroup():
         self.inputs[:,:,-1] = input_signal
         
         # Updates the states using the state-space equation dx = Ax + Bu
-        x = self.A.dot(self.states) + self.B.dot(self.inputs[:,:,0])
+        x = self.A @ self.states + self.B @ self.inputs[:,:,0]
         
         # Calculates the outputs using the state-space equation y = Cx + Du
-        y = self.C.dot(self.states) + self.D.dot(self.inputs[:,:,0])
+        y = self.C @ self.states + self.D @ self.inputs[:,:,0]
         
         # Updates internal signals
         self.states = x + x_noise
@@ -335,7 +346,7 @@ class Nonlinear(SolverCore):
         # Comment & diary
         Clib.diary('"' + self.name + '" has been created.')
 
-    def __call__(self, input_signal, x_noise = 0, y_noise = 0):
+    def __call__(self, input_signal, x_noise = np.array([0]), y_noise = np.array([0])):
         '''
         ### Overview:
         Utilizing current data, this function can furnish a `prediction` of the subsequent step.
@@ -355,7 +366,7 @@ class Nonlinear(SolverCore):
         current_time = self.time_line[0, self.current_step]
         
         # Preparing the input signal and saving it to the internal array
-        self.inputs[:, self.current_step] = input_signal
+        self.inputs[:, self.current_step] = input_signal.flatten()
         
         # Establishing before-state-limitations:
         # This can be employed if we desire to process states prior to computing the subsequent states utilizing dynamics.
@@ -393,8 +404,8 @@ class Nonlinear(SolverCore):
                             current_time)
         
         # Updating internal signals
-        self.states[:, self.current_step + 1] = x.flatten() + x_noise
-        self.outputs[:, self.current_step] = y.flatten() + y_noise
+        self.states[:, self.current_step + 1] = x.flatten() + x_noise.flatten()
+        self.outputs[:, self.current_step] = y.flatten() + y_noise.flatten()
         self.current_step += 1
     # End of function
 
@@ -433,11 +444,11 @@ class Nonlinear(SolverCore):
         output_signal = np.reshape(output_signal, (-1, 1))
         
         # Employing system dynamics to compute Jacobians
-        [A, L, H, M] = self._jacobians(self.states,
-                                        self.inputs,
-                                        self.current_step,
-                                        self.sample_time,
-                                        current_time)
+        [A, _, H, _, L, M] = self._jacobians(self.states,
+                                            self.inputs,
+                                            self.current_step,
+                                            self.sample_time,
+                                            current_time)
         ## Prediction step - Updating xp
         #  This section endeavors to obtain a prediction estimate from the dynamic
         #  model of your system directly from nonlinear equations
@@ -508,11 +519,11 @@ class Nonlinear(SolverCore):
         self.outputs[:, self.current_step] = output_signal
         output_signal = np.reshape(output_signal, (-1, 1))
         # Calculate Jacobians using system dynamics
-        [A, L, H, M] = self._jacobians(self.states,
-                                        self.inputs,
-                                        self.current_step,
-                                        self.sample_time,
-                                        current_time)
+        [_, _, _, _, L, M] = self._jacobians(self.states,
+                                            self.inputs,
+                                            self.current_step,
+                                            self.sample_time,
+                                            current_time)
         # Get last states prior and its covariance
         xm = self.states[:, self.current_step]
         xm = np.reshape(xm, (-1, 1))
@@ -687,7 +698,7 @@ class Nonlinear(SolverCore):
             signal = self.inputs[:, 0:self.n_steps]
             n_signals = self.n_inputs
         # Make a scope
-        scp = Scope(self.time_line, n_signals, initial=signal)
+        scp = Scope(time_line = self.time_line, n_signals = n_signals, initial=signal)
 
         # If title is set
         for key, val in kwargs.items():

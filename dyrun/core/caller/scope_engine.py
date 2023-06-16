@@ -16,15 +16,13 @@ class Scope():
     # 2) Use the below piece of code in 'simulation.py' to save each step
     #    signals.x.getdata(Input signal at step k, noise=0)
     
-    def __init__(self, time_line = 0, n_signals = 1, **kwargs):
+    def __init__(self, **kwargs):
         '''
         This class is a kind of scope that can save your signals, and can be used for after running purposes.
-
-        ### Input variables:
-        * Time line (is not necessary in load approach)
-        * `n_signals` - Number of signals (is not necessary in load approach)
         
         ### Configuration Options:
+        * `time_line` - time line
+        * `n_signals` - number of signals
         * `initial` - denotes the initial condition of the estimator
         * `load` - to load a `.csv` file which has been saved before. To import
         your saved files, use `load=(params, name)` structure, which `params` denotes
@@ -41,16 +39,27 @@ class Scope():
         # Initial variable values
         initial_condition = np.array([0])
         load_flag = False
+        n_signals = 1
+        auto_create_time_line = True
+        time_line = 0
         # Extracting the arbitraty value of properties
         for key, val in kwargs.items():
-            # The initial condition
-            if key == 'initial': initial_condition = np.array(val)
-            # To load data from a file
+            if key == 'initial':
+                initial_condition = np.array(val)
             if key == 'load':
                 load_flag = True
                 params = val[0]
                 file_name = val[1]
-
+            if key == 'n_signals': n_signals = val
+            if key == 'time_line':
+                auto_create_time_line = False
+                time_line = val
+        
+        self.time_line = np.reshape(time_line, (1, -1)) # Time line vector
+        self.time_line = np.array(self.time_line)
+        self.n_signals = n_signals
+        self.signals = np.zeros([self.n_signals, np.size(self.time_line)]) # Signal matrix
+        
         if load_flag == True:
             # Load the file and extract the content
             data = Clib.load_npy(params.save_path + '/scope/' + file_name)
@@ -58,15 +67,6 @@ class Scope():
             self.time_line = data[0,:].reshape((1, -1))
             self.signals = data[1:,:]
             self.n_signals = np.size(self.signals, 0)
-        else:
-            self.time_line = np.reshape(time_line, (1, -1)) # Time line vector
-            self.time_line = np.array(self.time_line)
-            self.n_signals = n_signals
-            self.signals = np.zeros([self.n_signals, np.size(self.time_line)]) # Signal matrix
-            
-        self.sample_time = np.mean(self.time_line[0, 1:-1] - self.time_line[0, 0:-2])
-        self.current_step = 0 # The current step of simulation
-        self.n = np.size(self.time_line) # The number of time steps
 
         # If the initial input does not exist, set it zero
         # Else, put the initial condition in the state matrix
@@ -77,13 +77,21 @@ class Scope():
             self.signals += 1
             self.signals  = initial_condition*self.signals
         elif sum(inish) != 1 and sum(inish) != 2:
-            if inish == (self.n_signals, self.n):
+            if inish == (self.n_signals, np.size(self.time_line)) \
+              or np.size(self.time_line) == 1 \
+              or np.size(self.time_line) == inish[1]:
                 self.signals = initial_condition
+                self.n_signals = inish[0]
+                if auto_create_time_line == True:
+                    self.time_line = np.arange(0, np.size(initial_condition, 1)).reshape(1,-1)
             else:
                 err_text = "The dimensional of initial value that inserted is wrong. Check it please."
                 logging.error(err_text)
                 raise ValueError(err_text)
-
+        
+        self.current_step = 0 # The current step of simulation
+        self.n = np.size(self.time_line) # The number of time steps
+        
     # The 'get' function can receive value and keep it.
     def get(self, data, **kwargs):
         '''
@@ -147,19 +155,44 @@ class Scope():
     # This function can make a jump in the step number variable
     # If no arguments are available, jump 1 step
     def __iadd__(self, i = 1):
-        '''
-        ### Overview:
-        This function can make a jump in the step number variable.
-
-        ### Input variables:
-        * how many steps you would like me to jump?; default is `1`
-        
-        ### Copyright:
-        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
-        Web page: https://github.com/abolfazldelavar/dyrun
-        '''
         self.current_step += i
+
+    # Adding two similar Scope
+    def __add__(self, other):
+        if isinstance(other, Scope):
+            signals = self.signals + other.signals
+            n_signals = self.n_signals
+            return Scope(time_line = self.time_line, n_signals = n_signals, initial = signals)
+        else:
+            return False
+    
+    # Subtracting two similar Scope
+    def __sub__(self, other):
+        if isinstance(other, Scope):
+            signals = self.signals - other.signals
+            n_signals = self.n_signals
+            return Scope(time_line = self.time_line, n_signals = n_signals, initial = signals)
+        else:
+            return False
+    
+    # Multiply two similar Scope
+    def __mul__(self, other):
+        if isinstance(other, Scope):
+            signals = self.signals * other.signals
+            n_signals = self.n_signals
+            return Scope(time_line = self.time_line, n_signals = n_signals, initial = signals)
+        else:
+            return False
         
+    # Division two similar Scope
+    def __truediv__(self, other):
+        if isinstance(other, Scope):
+            signals = self.signals / other.signals
+            n_signals = self.n_signals
+            return Scope(time_line = self.time_line, n_signals = n_signals, initial = signals)
+        else:
+            return False
+    
     # Reset Block by changing the current step to zero
     def reset(self):
         '''
@@ -172,6 +205,63 @@ class Scope():
         '''
         self.current_step = 0
 
+    # Appending
+    def append(self, other):
+        """
+        ### Overview:
+        Appending signals with similar `time_line`.
+        
+        ### Input variables:
+        `other` - the second Scope object that is supposed to be appended to the first one.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        """
+        if isinstance(other, Scope):
+            obj = Scope(time_line = self.time_line,
+                        n_signals = self.n_signals + other.n_signals,
+                        initial = np.concatenate((self.signals, other.signals), axis=0))
+            return obj
+        else:
+            return False
+    
+    # Removing signals
+    def remove(self, rows_to_remove):
+        """
+        ### Overview:
+        Eliminating signals.
+        
+        ### Input variables:
+        `rows_to_remove` - the rows is supposed to be removed.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        """
+        # Remove the second row (index 1)
+        signals = np.delete(self.signals, rows_to_remove, axis=0)
+        n_signals = self.n_signals - np.size(rows_to_remove)
+        return Scope(time_line = self.time_line, n_signals = n_signals, initial = signals)
+    
+    # Selecting signals
+    def select(self, rows_to_select):
+        """
+        ### Overview:
+        Selecting arbitrary signals.
+        
+        ### Input variables:
+        `rows_to_select` - the rows is supposed to be selected.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        """
+        # Remove the second row (index 1)
+        signals = self.signals[rows_to_select, :]
+        n_signals = np.size(rows_to_select)
+        return Scope(time_line = self.time_line, n_signals = n_signals, initial = signals)
+    
     # The below function is used to plot the internal signals
     def show(self, params, **kwargs):
         '''
@@ -191,12 +281,15 @@ class Scope():
                 * `no_time=[[0,1], [1,2]]` or `no_time=[[0,1,2], [3,0,1]]` - create 2D or 3D plots of different signal groups; numbers are signal indices
             * `save` - name of file to save plot as; can be `image.png/pdf/jpg` or `True` to choose automatically
             * `x_label`, `y_label`, and `z_label` - titles for x, y, and z axes of plot
+            * `x_lim`, `y_lim`, and `z_lim` - titles for x, y, and z axes limitation
+            * `x_line` and `y_line` - is used to plot x or y lines; the adjusted data must be a vector of x and y values
             * `legend` - control legend display:
                 * `legend=True` and `legend=False` - enable and disable legend
-                * `legend='title'` - enable legend with specified title
+                * `legend=('day', 'night')` - enable legend with specified labels
             * `line_width` - set line width
             * `grid` - enable grid on plot (`True` or `False`)
             * `leg_col` - control number of columns in legend (positive integer)
+            * `leg_loc` - the location which the legend must be illustrated
             
         ### Copyright:
         Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
@@ -214,33 +307,32 @@ class Scope():
         legend = -1
         line_width = 0.5
         grid = 0
-        n_col = 3
-
+        n_col = 1
+        leg_loc = 'best'
+        x_lim = 0
+        y_lim = 0
+        z_lim = 0
+        x_line = []
+        y_line = []
         for key, val in kwargs.items():
-            # 'select' can choose signals arbitrary
             if key == 'select': select = val
-            # 'derive' is used to get derivatives of the signals
             if key == 'derive': derive = val
-            # 'no_time' is related to plot while time is hidden
             if key == 'no_time': no_time = val
-            # 'save' can export the figure into files
             if key == 'save': save = val
-            # 'x_label' is the figure xlabel
             if key == 'x_label': x_label = val
-            # 'y_label' is the figure y_label
             if key == 'y_label': y_label = val
-            # 'z_label' is the figure z_label
+            if key == 'x_lim': x_lim = val
+            if key == 'y_lim': y_lim = val
+            if key == 'z_lim': z_lim = val
+            if key == 'x_line': x_line = val
+            if key == 'y_line': y_line = val
             if key == 'z_label': z_label = val
-            # 'title' is the figure title
             if key == 'title': title = val
-            # 'legend' can control the figure legend
             if key == 'legend': legend = val
-            # 'linewidth' is the line width of the pen
             if key == 'line_width': line_width = val
-            # 'grid' refers to the grid net of the figure
             if key == 'grid': grid  = val
-            # The number of legend columns
-            if key == 'legCol': n_col = val
+            if key == 'leg_col': n_col = val
+            if key == 'leg_loc': leg_loc = val
 
         # Extracting the arbitraty values of properties
         if select == -1: select = range(0, self.n_signals)
@@ -369,10 +461,22 @@ class Scope():
         elif legend == 0:
             ax.legend().remove()
         elif legend == 1:
-            ax.legend(loc='best', frameon=False, fontsize=14, bbox_to_anchor=(0,1,1,0), ncol=n_col)
+            ax.legend(loc=leg_loc, frameon=False, bbox_to_anchor=(0,1,1,0), ncol=n_col)
         else:
-            ax.legend(legend, loc='upper right', frameon=False, fontsize=14, bbox_to_anchor=(0,1,1,0), ncol=n_col)
+            ax.legend(legend, loc=leg_loc, frameon=False, bbox_to_anchor=(0,1,1,0), ncol=n_col)
         
+        if x_lim != 0: ax.set_xlim(x_lim)
+        if y_lim != 0: ax.set_ylim(y_lim)
+        if z_lim != 0: ax.set_zlim(z_lim)
+        
+        if np.size(y_line) != 0:
+            for y_l in y_line:
+                ax.axhline(y=y_l, color='#888', linestyle='-.')
+        
+        if np.size(x_line) != 0:
+            for x_l in x_line:
+                ax.axvline(x=x_l, color='#888', linestyle='-.')
+                
         # Draw a grid net
         if grid != 0: ax.grid(True)
 
@@ -427,34 +531,22 @@ class Scope():
         gradient = mpl.cm.RdGy
 
         for key, val in kwargs.items():
-            # 'select' can choose signals arbitrary
             if key == 'select': select = val
-            # 'derive' is used to get derivatives of the signals
             if key == 'derive': derive = val
-            # 'save' can export the figure into files
             if key == 'save': save = val
-            # 'x_label' is the figure x_label
             if key == 'x_label': x_label = val
-            # 'y_label' is the figure y_label
             if key == 'y_label': y_label = val
-            # 'title' is the figure title
             if key == 'title': title = val
-            # 'color_bar' can enable the color bar
             if key == 'color_bar': color_bar = val
-            # The color limt
             if key == 'color_limit':
                 color_limit = val
                 switcher_1 = 0
             if key == 'bar_ticks':
                 bar_ticks = val
                 switcher_2 = 0
-            # The gradient
             if key == 'cmap': gradient = val
-            # hw_ratio denotes the height to width
             if key == 'hw_ratio': hw_ratio = val
-            # Interpolation of the illustration
             if key == 'interpolation': interp = val
-            # Rasterization
             if key == 'rasterized': rasterize = val
 
         # Get data
