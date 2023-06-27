@@ -163,27 +163,6 @@ class Structure(dict):
         String representation of the struct
         """
         return "struct({})".format(super().__repr__())
-
-    def __getattr__(self, field):
-        """
-        Gets value of a field
-        """
-        if field not in dir(self):
-            if field in self.keys():
-                return self[field]
-            else:
-                return None
-        else:
-            return None
-    
-    def __setattr__(self, field, value):
-        """
-        Sets value of a field
-        """
-        if field not in dir(self):
-            self[field] = value
-        else:
-            return super().__setattr__(field, value)
     
     def fields(self):
         """

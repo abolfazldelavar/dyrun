@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'dyrun',
-    version = '1.1.2',
+    version = '1.1.3',
     author = 'Abolfazl Delavar',
     author_email = 'faryadell@gmail.com',
     description = 'Easy way to simulation',

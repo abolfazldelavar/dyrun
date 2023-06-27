@@ -256,8 +256,9 @@ from control import *
 # the preceding code block should be commented.
 # 
 # Usage instruction:
+# * `import cProfile`
 # * `simulationorder = 'simulation(params, signals, models)'`
-# * `profilename = params.diaryDir + '/profiler/' + params.diaryFile + '.prof'`
+# * `profilename = 'data.prof'`
 # * `cProfile.run(simulationorder, profilename)`
 # 
 # Illustration in jupyter:
@@ -265,8 +266,8 @@ from control import *
 # * `%snakeviz profilename`
 # 
 # Illustration in Command Prompt:
-# * `python -m cProfile -o logs\profiler\cprofiler.prof dyrun.py`
-# * `snakeviz logs\profiler\cprofiler.prof`
+# * `python -m cProfile -o data.prof dyrun.py`
+# * `snakeviz data.prof`
 
 # %%
 # import cProfile

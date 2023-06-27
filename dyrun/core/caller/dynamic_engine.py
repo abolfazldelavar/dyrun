@@ -60,7 +60,7 @@ class LtiGroup():
             elif inserted_system.dt == sample_time and type(inserted_system) == TransferFunction:
                 # The input is a discrete-time transfer function with a consistent sample time.
                 self.system = minreal(tf2ss(inserted_system))
-            elif type(inserted_system) == StateSpace:
+            elif type(inserted_system) == LinearIOSystem:
                 if inserted_system.dt != 0:
                     # The input is a discrete-time state-space system with a different sample time.
                     # MATLAB code is: self.system = d2d(inserted_system, sample_time);
@@ -79,10 +79,10 @@ class LtiGroup():
         self.name = name
         self.number_ltis = n_systems # The number of LTI systems
         self.sample_time = sample_time # Simulation sample time
-        self.A = self.system.A # Dynamic matrix A
-        self.B = self.system.B # Dynamic matrix B
-        self.C = self.system.C # Dynamic matrix C
-        self.D = self.system.D # Dynamic matrix D
+        self.A = np.array(self.system.A) # Dynamic matrix A
+        self.B = np.array(self.system.B) # Dynamic matrix B
+        self.C = np.array(self.system.C) # Dynamic matrix C
+        self.D = np.array(self.system.D) # Dynamic matrix D
         self.n_states = self.system.A.shape[0] # The number of states
         self.n_inputs = self.system.B.shape[1] # The number of inputs
         self.n_outputs = self.system.C.shape[0] # The number of measurements
@@ -129,10 +129,10 @@ class LtiGroup():
         self.inputs[:,:,-1] = input_signal
         
         # Updates the states using the state-space equation dx = Ax + Bu
-        x = self.A @ self.states + self.B @ self.inputs[:,:,0]
+        x = np.dot(self.A, self.states) + np.dot(self.B, self.inputs[:,:,0])
         
         # Calculates the outputs using the state-space equation y = Cx + Du
-        y = self.C @ self.states + self.D @ self.inputs[:,:,0]
+        y = np.dot(self.C, x) + np.dot(self.D, self.inputs[:,:,0])
         
         # Updates internal signals
         self.states = x + x_noise
