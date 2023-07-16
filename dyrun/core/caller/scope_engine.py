@@ -7,7 +7,7 @@
 
 # Import initial classes
 from core.lib.required_libraries import *
-from core.lib.core_library import Plib
+from core.lib.core_library import Plib, Clib
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
 class Scope():
@@ -25,6 +25,7 @@ class Scope():
         * `n_signals` - number of signals
         * `initial` - denotes the initial condition of the estimator
         * `load` - to load a `.csv` file which has been saved before. To import
+        * `name` - name of the oscope
         your saved files, use `load=(params, name)` structure, which `params` denotes
         the parameters and `name` is the name of file you would like the file save with it.
         Bear in mind that your files must be moved into `../outputs/scope/` directory,
@@ -42,6 +43,7 @@ class Scope():
         n_signals = 1
         auto_create_time_line = True
         time_line = 0
+        self.name = 'Scope object'
         # Extracting the arbitraty value of properties
         for key, val in kwargs.items():
             if key == 'initial':
@@ -51,6 +53,7 @@ class Scope():
                 params = val[0]
                 file_name = val[1]
             if key == 'n_signals': n_signals = val
+            if key == 'name': self.name = val
             if key == 'time_line':
                 auto_create_time_line = False
                 time_line = val
@@ -91,7 +94,7 @@ class Scope():
         
         self.current_step = 0 # The current step of simulation
         self.n = np.size(self.time_line) # The number of time steps
-        
+    
     # The 'get' function can receive value and keep it.
     def get(self, data, **kwargs):
         '''
@@ -193,6 +196,43 @@ class Scope():
         else:
             return False
     
+    # Representation string
+    def __repr__(self):
+        text = f"""
+        Scope object
+        
+        * Number of signals: {self.n_signals}
+        * Number of time steps: {self.n}
+        """
+        return text
+    
+    # Representation LaTeX form
+    def _repr_latex_(self):
+        table_c = r'\begin{aligned}'
+        table_c += f'&n\_signals &&= {self.n_signals} \\\\ '
+        table_c += f'&n &&= {self.n} \\\\ '
+        table_c += f'&current\_step &&= {self.current_step} \\\\ '
+        table_c += f'&time\_line &&= {Clib.latex_matrix(self.time_line)} \\\\ '
+        table_c += f'&signals &&= {Clib.latex_matrix(self.signals)} '
+        table_c += r'\end{aligned}'
+        text = f"#### {self.name}\n\n ${table_c}$"
+        return text
+           
+    def dc(self):
+        '''
+        ### Overview:
+        Creates a deep copy of the object.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        from copy import deepcopy
+        self_copy = Scope()
+        for varname, value in vars(self).items():
+            setattr(self_copy, varname, deepcopy(value))
+        return self_copy
+    
     # Reset Block by changing the current step to zero
     def reset(self):
         '''
@@ -206,25 +246,51 @@ class Scope():
         self.current_step = 0
 
     # Appending
-    def append(self, other):
+    def append(self, other, select = False):
         """
         ### Overview:
         Appending signals with similar `time_line`.
         
         ### Input variables:
         `other` - the second Scope object that is supposed to be appended to the first one.
+        `select` - Is used to select only a specific signal of each Scope. For instance, to
+        choose and append two first signals of each Scopes, use `scope_1.append((scope_2, scope_3, scope_4), [0,1])`
         
         ### Copyright:
         Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
         Web page: https://github.com/abolfazldelavar/dyrun
         """
+            
         if isinstance(other, Scope):
-            obj = Scope(time_line = self.time_line,
-                        n_signals = self.n_signals + other.n_signals,
-                        initial = np.concatenate((self.signals, other.signals), axis=0))
-            return obj
-        else:
-            return False
+            if select == False:
+                n_signals = self.n_signals + other.n_signals
+                initial = np.concatenate((self.signals, other.signals), axis=0)
+            else:
+                n_signals = 2*np.array(select).size
+                initial = np.concatenate((self.signals[select], other.signals[select]), axis=0)
+        
+        elif isinstance(other, (tuple, list)):
+            for sc in other:
+                if not isinstance(sc, Scope): return False
+            
+            if select == False:
+                n_signals = self.n_signals
+                initial = self.signals
+                for sc in other:
+                    n_signals += sc.n_signals
+                    initial = np.concatenate((initial, sc.signals), axis=0)
+            else:
+                select = np.array(select)
+                if len(select.shape) == 1:
+                    n_signals = select.size
+                    initial = self.signals[select, :]
+                    for sc in other:
+                        n_signals += np.array(select).size
+                        initial = np.concatenate((initial, sc.signals[select, :]), axis=0)
+        else: return False
+        
+        obj = Scope(time_line = self.time_line, n_signals = n_signals, initial = initial)
+        return obj
     
     # Removing signals
     def remove(self, rows_to_remove):
@@ -262,6 +328,21 @@ class Scope():
         n_signals = np.size(rows_to_select)
         return Scope(time_line = self.time_line, n_signals = n_signals, initial = signals)
     
+    def roll(self, shift_value):
+        """
+        ### Overview:
+        Rolling in time.
+        
+        ### Input variables:
+        `shift_value` - The amount of shifting.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        """
+        signals = np.roll(self.signals, shift_value, axis=1)
+        return Scope(time_line = self.time_line, n_signals = self.n_signals, initial = signals)
+
     # The below function is used to plot the internal signals
     def show(self, params, **kwargs):
         '''

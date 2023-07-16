@@ -17,16 +17,19 @@ class LtiGroup():
         ### Overview:
         This class facilitates the creation of a collection of LTI systems that may also have interactions.
         It is important to note that linear systems or filters must be imported in the form of
-        a `tf()` or `ss()` from `control.matlab` extension.
+        a `tf()` or `ss()` from `control.matlab` extension, or directly like `(A, B, C, D)` in discrete form.
 
         ### Input Parameters:
-        * System; for example, `tf([1], [1,2,3])` or (A, B, C, D)
+        * System; for example, `tf([1], [1,2,3])` or `(A, B, C, D)`
 
         ### Configuration Options:
         * `sample_time`: Defines the sample time of the simulation; default is `1`
         * `initial`: Specifies the initial state of the system
         * `replicate`: Determines the number of components; default value is `1`
         * `delay`: Defines the input delay in step scale; for example, `18` steps
+        * `newest`: The outputs are calculate from the predicted states or the current ones; default
+        is `False` which means the current states
+        * `name`: Defines a name for the object
         
         ### Copyright:
         Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
@@ -38,12 +41,14 @@ class LtiGroup():
         n_systems = 1
         name = 'LTI system'
         sample_time = 1
+        self.newest = False
         for key, val in kwargs.items():
             if key == 'initial': initial_condition = val
             if key == 'delay': time_delay = val
             if key == 'replicate': n_systems = val
             if key == 'name': name = val
             if key == 'sample_time': sample_time = val
+            if key == 'newest': self.newest = val
             
         if isinstance(inserted_system, tuple):
             self.system = Structure()
@@ -51,7 +56,7 @@ class LtiGroup():
             self.system.B = inserted_system[1]
             self.system.C = inserted_system[2]
             self.system.D = inserted_system[3]
-            if inserted_system[3] == 0:
+            if np.array(inserted_system[3]).all() == 0:
                 self.system.D = np.zeros((np.size(self.system.C, 0), np.size(self.system.B, 1)))
         else:
             if inserted_system.dt == sample_time and type(inserted_system) == LinearIOSystem:
@@ -110,11 +115,48 @@ class LtiGroup():
         # Comment and diary
         Clib.diary(f'{self.name} has been created.')
 
-    def __call__(self, input_signal, x_noise = 0, y_noise = 0):
+    def __repr__(self):
+        return f"** {self.name} **\nNumber of elements: {self.number_ltis}"
+    
+    # Representation LaTeX form
+    def _repr_latex_(self):
+        ss_form  = r'\begin{align}'
+        ss_form += r'x_{k' + ('' if self.newest == True else '+1') + '} &= '
+        ss_form += Clib.latex_matrix(self.A, (6,6))
+        ss_form += r'x_{k' + ('-1' if self.newest == True else '') + '} + '
+        ss_form += Clib.latex_matrix(self.B, (6,6))
+        ss_form += r'u_{k' + ('-1' if self.newest == True else '') + '} \\nonumber \\\\ '
+        ss_form += r'y_k & = ' + Clib.latex_matrix(self.C, (6,6))
+        ss_form += r'x_{k} + ' + Clib.latex_matrix(self.D, (6,6)) + r'u_{k} \nonumber'
+        ss_form += r'\end{align}'
+        
+        properties  = r'\begin{aligned}'
+        properties += r'&\text{System poles: } &&= ' + Clib.latex_matrix(np.linalg.eig(self.A)[0].reshape((1,-1))) + ' \\\\ '
+        properties += r'\end{aligned}'
+        
+        table_c  = r'\begin{aligned}'
+        table_c += f'&number\_ltis &&= {self.number_ltis} \\\\ '
+        table_c += f'&sample\_time &&= {self.sample_time} \\\\ '
+        table_c += f'&n\_states &&= {self.n_states} \\\\ '
+        table_c += f'&n\_outputs &&= {self.n_outputs} \\\\ '
+        table_c += f'&n\_inputs &&= {self.n_inputs} \\\\ '
+        table_c += f'&delay &&= {self.delay} \\\\ '
+        table_c += f'&newest &&= {self.newest} \\\\ '
+        table_c += f'&states &&= {Clib.latex_matrix(self.states)} \\\\ '
+        table_c += f'&outputs &&= {Clib.latex_matrix(self.outputs)} '
+        table_c += r'\end{aligned}'
+        
+        text  = f"### {self.name}\n\n "
+        text += f"#### Dynamic matrices: \n\n ${ss_form}$ \n\n "
+        text += f"#### Dynamic properties: \n\n ${properties}$ \n\n "
+        text += f"#### Variables: \n\n ${table_c}$"
+        return text
+    
+    def predict(self, input_signal, x_noise = 0, y_noise = 0):
         '''
         ### Overview:
         This function can provide an easy way to call dydnamics of the system to calculate the next sample states.
-
+        
         ### Input variables:
         * Input array at step `k`
         * Internal additive noise which is added to the states
@@ -132,14 +174,153 @@ class LtiGroup():
         x = np.dot(self.A, self.states) + np.dot(self.B, self.inputs[:,:,0])
         
         # Calculates the outputs using the state-space equation y = Cx + Du
-        y = np.dot(self.C, x) + np.dot(self.D, self.inputs[:,:,0])
+        y = np.dot(self.C, x if self.newest == 1 else self.states) + np.dot(self.D, self.inputs[:,:,0])
         
         # Updates internal signals
         self.states = x + x_noise
         self.outputs = y + y_noise
+# End of class
+
+# Linear Kalman Filter
+class LinearKalmanFilter():
+    def __init__(self, inserted_system, **kwargs):
+        '''
+        ### Overview:
+        Linear Kalman filter to observe the states of an LIT system.
+        It is important to note that linear systems or filters must be imported in the form of
+        a `LTIgroup` class, or directly like `(A, B, C, D)` in discrete form.
+
+        ### Input Parameters:
+        * System; for example, `(A, B, C, D)`
+
+        ### Configuration Options:
+        * `name`: Defines a name for the object
+        * `x_0`: Specifies the initial state
+        * `P_0`: Denotes the initial covariance
+        * `process_noise`: Sets the process noise covariacne `Q`
+        * `measurement_noise`: Defines the measurement noise covariance `R`
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        self.inserted_system = inserted_system
+        initial_condition = [0]
+        initial_cov = [0]
+        Q = [0]
+        R = [0]
+        name = 'LTI system'
+        for key, val in kwargs.items():
+            if key == 'x_0': initial_condition = val
+            if key == 'P_0': initial_cov = val
+            if key == 'process_noise': Q = val
+            if key == 'measurement_noise': R = val
+            if key == 'name': name = val
+        
+        self.system = Structure()
+        if isinstance(inserted_system, tuple):
+            self.system.A = inserted_system[0]
+            self.system.B = inserted_system[1]
+            self.system.C = inserted_system[2]
+            self.system.D = inserted_system[3]
+        else:
+            self.system.A = inserted_system.A
+            self.system.B = inserted_system.B
+            self.system.C = inserted_system.C
+            self.system.D = inserted_system.D
+            
+        if np.array(self.system.D).all() == 0:
+            self.system.D = np.zeros((np.size(self.system.C, 0), np.size(self.system.B, 1)))
+
+        self.name = name
+        self.A = np.array(self.system.A) # Dynamic matrix A
+        self.B = np.array(self.system.B) # Dynamic matrix B
+        self.C = np.array(self.system.C) # Dynamic matrix C
+        self.D = np.array(self.system.D) # Dynamic matrix D
+        self.n_states = self.system.A.shape[0] # The number of states
+        self.n_inputs = self.system.B.shape[1] # The number of inputs
+        self.n_outputs = self.system.C.shape[0] # The number of measurements
+        self.x_pr = np.zeros([self.n_states, 1]) # Priori
+        self.x_ps = np.zeros([self.n_states, 1]) # Posteriori
+        self.res = np.zeros([self.n_outputs, 1]) # Residual
+        self.K = np.zeros([self.n_states, self.n_outputs]) # Kalman Gain
+        self.P_pr = np.eye(self.n_states, self.n_states) # Priori covariance
+        self.P_ps = np.eye(self.n_states, self.n_states)*1e3 # Posteriori covariance
+        self.Q = np.eye(self.n_states, self.n_states)*1e-4 # Process noise covariance
+        self.R = np.eye(self.n_outputs, self.n_outputs)*1e-4 # Measurement noise covariance
+        
+        # Adjusting the initial condition
+        initial_condition = np.array(initial_condition).ravel()
+        if initial_condition.size == self.n_states:
+            self.x_ps = initial_condition.reshape((-1,1))
+        # Setting the initial covariance
+        initial_cov = np.array(initial_cov)
+        if sum(initial_cov.shape) == 2*self.n_states:
+            self.P_ps = initial_cov
+        # Setting Q
+        Q = np.array(Q)
+        if sum(Q.shape) == 2*self.n_states:
+            self.Q = Q
+        # Setting R
+        R = np.array(R)
+        if sum(R.shape) == 2*self.n_outputs:
+            self.R = R
+        # Comment and diary
+        Clib.diary(f'{self.name} has been created.')
+        
+    # Representation LaTeX form
+    def _repr_latex_(self):            
+        table_c  = r'\begin{aligned}'
+        table_c += f'&n\_states &&= {self.n_states} \\\\ '
+        table_c += f'&n\_outputs &&= {self.n_outputs} \\\\ '
+        table_c += f'&n\_inputs &&= {self.n_inputs} \\\\ '
+        table_c += f'&A &&= {Clib.latex_matrix(self.A, (6,6))} \\\\ '
+        table_c += f'&B &&= {Clib.latex_matrix(self.B, (6,6))} \\\\ '
+        table_c += f'&C &&= {Clib.latex_matrix(self.C, (6,6))} \\\\ '
+        table_c += f'&D &&= {Clib.latex_matrix(self.D, (6,6))} \\\\ '
+        table_c += f'&x\_pr &&= {Clib.latex_matrix(self.x_pr)} \\\\ '
+        table_c += f'&x\_ps &&= {Clib.latex_matrix(self.x_ps)} \\\\ '
+        table_c += f'&res &&= {Clib.latex_matrix(self.res)} \\\\ '
+        table_c += f'&K &&= {Clib.latex_matrix(self.K)} \\\\ '
+        table_c += f'&P\_pr &&= {Clib.latex_matrix(self.P_pr)} \\\\ '
+        table_c += f'&P\_ps &&= {Clib.latex_matrix(self.P_ps)} \\\\ '
+        table_c += f'&Q &&= {Clib.latex_matrix(self.Q)} \\\\ '
+        table_c += f'&R &&= {Clib.latex_matrix(self.R)} '
+        table_c += r'\end{aligned}'
+        
+        text  = f"### {self.name}\n\n "
+        text += f"#### Variables: \n\n ${table_c}$"
+        return text
     
-    def __repr__(self):
-        return f"** {self.__name__} **\nNumber of elements: {self.number_ltis}"
+    def predict(self, inputs, outputs):
+        '''
+        ### Overview:
+        Making a prediction of the next step using the current data
+
+        ### Input variables:
+        * Input array at step `k`
+        * Output array at step `k`
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        
+        # Priori step
+        self.x_pr = np.dot(self.A, self.x_ps) + np.dot(self.B, np.array(inputs).reshape((-1,1)))
+        self.P_pr = self.A @ self.P_ps @ self.A.T + self.Q
+        
+        # Kalman gain
+        self.K = self.P_pr @ self.C.T @ np.linalg.inv(self.C @ self.P_pr @ self.C.T + self.R)
+        
+        # Residual
+        self.res = np.array(outputs).reshape((-1,1)) - np.dot(self.C, self.x_pr)
+        
+        # Posteriori step
+        self.x_ps = self.x_pr + np.dot(self.K, self.res)
+        self.P_ps = (np.eye(self.n_states) - self.K @ self.C) @ self.P_pr
+    
+    
 # End of class
 
 # Nonlinear dynamic group
@@ -221,7 +402,10 @@ class NonlinearGroup(SolverCore):
         # Comment & diary
         Clib.diary('"' + self.name + '" has been created.')
     
-    def __call__(self, input_signal, **kwargs):
+    def __repr__(self):
+        return f"** {self.__name__} **\nNumber of elements: {self.n_neurons}\nSolver Type: '{self.solver_type}'"
+    
+    def predict(self, input_signal, **kwargs):
         '''
         ### Overview:
         This function can provide a `prediction` of the next step, using the current inputs.
@@ -279,8 +463,6 @@ class NonlinearGroup(SolverCore):
         self.outputs = y + y_noise
     # End of function
 
-    def __repr__(self):
-        return f"** {self.__name__} **\nNumber of elements: {self.n_neurons}\nSolver Type: '{self.solver_type}'"
 # End of class
 
 

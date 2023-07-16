@@ -592,6 +592,40 @@ class Clib():
         Clib.diary('The file named "' + name + '.npy" has been loaded.')
         return tensorData
     
+    ## Making Latex matrix form
+    @staticmethod
+    def latex_matrix(matr, max_size=(15, 15)):
+        '''
+        ### Overview:
+        Loading the content of the given `.npy` file.
+
+        ### Input variables:
+        * `matr` - Matrix array.
+        * `max_size` - Maximum illustration size; default is `(15, 15)`.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        add_col_dots = r''
+        if np.size(matr, 1) > max_size[1]:
+            add_col_dots = r' & \dots '
+            matr = matr[:, 0:max_size[1]]
+        
+        add_row_dots = r''
+        if np.size(matr, 0) > max_size[0]:
+            add_row_dots = ' \dots ' + ' & \dots '*(np.size(matr, 1) - 1) + ' \\ '
+            matr = matr[0:max_size[1], :]
+        
+        str_signals = r'\begin{bmatrix}'
+        for row in matr:
+            str_signals += ' & '.join([str(elem) for elem in row])
+            str_signals += add_col_dots
+            str_signals += r'\\'
+        str_signals += add_row_dots
+        str_signals += r'\end{bmatrix}'
+        return str_signals
+    
     ## CDF to value
     def cdf_value(signal, beta):
         '''
