@@ -16,6 +16,8 @@ class Scope():
     # 2) Use the below piece of code in 'simulation.py' to save each step
     #    signals.x.getdata(Input signal at step k, noise=0)
     
+    all_objects = []
+    
     def __init__(self, **kwargs):
         '''
         This class is a kind of scope that can save your signals, and can be used for after running purposes.
@@ -35,6 +37,8 @@ class Scope():
         Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
         Web page: https://github.com/abolfazldelavar/dyrun
         '''
+        # Adding the current object to the list
+        Scope.all_objects.append(self)
         # Requirements
         from core.lib.core_library import Clib
         # Initial variable values
@@ -68,18 +72,18 @@ class Scope():
             data = Clib.load_npy(params.save_path + '/scope/' + file_name)
             # Set the dependent vectors
             self.time_line = data[0,:].reshape((1, -1))
-            self.signals = data[1:,:]
+            self.signals = np.delete(data, 0, 0)
             self.n_signals = np.size(self.signals, 0)
 
         # If the initial input does not exist, set it zero
         # Else, put the initial condition in the state matrix
         inish = initial_condition.shape
-        if sum(inish) == self.n_signals or sum(inish) == self.n_signals + 1:
+        if load_flag == False and (sum(inish) == self.n_signals or sum(inish) == self.n_signals + 1):
             # If the imported initial value is not a column vector, do this:
             initial_condition = np.reshape(initial_condition, (-1, 1))
             self.signals += 1
             self.signals  = initial_condition*self.signals
-        elif sum(inish) != 1 and sum(inish) != 2:
+        elif load_flag == False and sum(inish) != 1 and sum(inish) != 2:
             if inish == (self.n_signals, np.size(self.time_line)) \
               or np.size(self.time_line) == 1 \
               or np.size(self.time_line) == inish[1]:
@@ -217,7 +221,10 @@ class Scope():
         table_c += r'\end{aligned}'
         text = f"#### {self.name}\n\n ${table_c}$"
         return text
-           
+    
+    def __getitem__(self, index):
+        return self.signals[index]
+    
     def dc(self):
         '''
         ### Overview:
@@ -233,6 +240,20 @@ class Scope():
             setattr(self_copy, varname, deepcopy(value))
         return self_copy
     
+    @classmethod
+    def reset_all(cls):
+        '''
+        ### Overview:
+        Reseting all objects.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        for obj in cls.all_objects:
+            obj.current_step = 0
+            obj.signals = np.zeros(obj.signals.shape)
+            
     # Reset Block by changing the current step to zero
     def reset(self):
         '''
@@ -551,12 +572,18 @@ class Scope():
         if z_lim != 0: ax.set_zlim(z_lim)
         
         if np.size(y_line) != 0:
-            for y_l in y_line:
-                ax.axhline(y=y_l, color='#888', linestyle='-.')
+            if isinstance(y_line, (tuple, list)):
+                for y_l in y_line:
+                    ax.axhline(y=y_l, color='#888', linestyle='-.')
+            else:
+                ax.axhline(y=y_line, color='#888', linestyle='-.')
         
         if np.size(x_line) != 0:
-            for x_l in x_line:
-                ax.axvline(x=x_l, color='#888', linestyle='-.')
+            if isinstance(x_line, (tuple, list)):
+                for x_l in x_line:
+                    ax.axvline(x=x_l, color='#888', linestyle='-.')
+            else:
+                ax.axvline(x=x_line, color='#888', linestyle='-.')
                 
         # Draw a grid net
         if grid != 0: ax.grid(True)

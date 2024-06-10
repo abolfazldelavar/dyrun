@@ -589,7 +589,7 @@ class Clib():
         # Load the tensor from the .npy file
         tensorData = np.load(name + '.npy')
         # Print the result of loading
-        Clib.diary('The file named "' + name + '.npy" has been loaded.')
+        Clib.diary('"' + name + '.npy" has been loaded.')
         return tensorData
     
     ## Making Latex matrix form
@@ -626,6 +626,7 @@ class Clib():
         str_signals += r'\end{bmatrix}'
         return str_signals
     
+    
     ## CDF to value
     def cdf_value(signal, beta):
         '''
@@ -657,6 +658,40 @@ class Clib():
             idx = 0
         value = x_line[idx]
         return value
+    
+    ## CDF to value
+    def freq_finder(signal, window_size, jumping_steps, sample_time, threshold, smoother_pole):
+        '''
+        ### Overview:
+        Obtaining the value in a stocastic signal corresponding to a special CDF value.
+
+        ### Input variables:
+        * `signal` - Stocastic signal
+        * `beta`- the supposing CDF between 0 and 1
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        signal = np.array(signal)
+        n = signal.shape[1]
+        frequency = np.zeros((1, n))
+        window = np.ones((1, window_size))
+        temp_1 = sample_time*window_size
+
+        for t in np.arange(0, n-window_size, jumping_steps):
+            selected = signal[0, t:(t+window_size)]*window
+            fired_whole = np.int0(selected >= threshold)
+            # fired = (fired_whole - np.roll(fired_whole, 1, axis=1)) > 0
+            frq_value = np.sum(fired)/temp_1
+            frequency[0, t:(t + jumping_steps)] = np.tile(frq_value, (1, jumping_steps))
+        g = tf(1, [smoother_pole, 1])
+        time_line = np.linspace(0, n*sample_time, n)
+        frequency_smoothed  = lsim(g, frequency.T, time_line)[0].reshape((1,-1))
+        return (frequency, frequency_smoothed)
+        # The below piece of code also can be useful
+        # window_size = 10  # size of the moving average window
+        # np.convolve(sc_tt[0,:], np.ones(window_size)/window_size, mode='valid')
     
     ## Delayed in a signal
     @staticmethod
@@ -838,11 +873,11 @@ class Plib():
         # Setting the font of LaTeX
         plt.rcParams.update({
             "text.usetex": True,
-            "font.size": 17,
+            "font.size": 22,
             "font.family": ""       # Times New Roman, Helvetica
         })
         # To set a size for all figures
-        plt.rcParams["figure.figsize"] = [8.5, 5.07]
+        plt.rcParams["figure.figsize"] = [8.5*0.8, 5.07*0.3]
         # Set all font properties
         # plt.rc('font', size = 17)
         # Set all plotted lines properties

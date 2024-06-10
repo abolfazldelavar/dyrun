@@ -9,9 +9,13 @@
 from core.lib.required_libraries import *
 from core.lib.core_library import SolverCore, Clib, Structure
 from core.caller.scope_engine import Scope
+import scipy
 
 # Linear dynamics
 class LtiGroup():
+    # All objects
+    all_objects = []
+    # Initialization
     def __init__(self, inserted_system, **kwargs):
         '''
         ### Overview:
@@ -30,18 +34,28 @@ class LtiGroup():
         * `newest`: The outputs are calculate from the predicted states or the current ones; default
         is `False` which means the current states
         * `name`: Defines a name for the object
+        * `auto_noise`: Noise is added automatically based on the process and measurement noise variacnes;
+        default is `True`
+        * `process_noise`: Sets the process noise variance `Q`
+        * `measurement_noise`: Defines the measurement noise variance `R`
         
         ### Copyright:
         Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
         Web page: https://github.com/abolfazldelavar/dyrun
         '''
+        # Adding the current object to the list
+        LtiGroup.all_objects.append(self)
+        # Initial variables
         self.inserted_system = inserted_system
         initial_condition = [0]
         time_delay = 0
         n_systems = 1
         name = 'LTI system'
         sample_time = 1
+        Q_flag = 0
+        R_flag = 0
         self.newest = False
+        self.auto_inject_noise = True
         for key, val in kwargs.items():
             if key == 'initial': initial_condition = val
             if key == 'delay': time_delay = val
@@ -49,8 +63,15 @@ class LtiGroup():
             if key == 'name': name = val
             if key == 'sample_time': sample_time = val
             if key == 'newest': self.newest = val
+            if key == 'auto_noise': self.auto_inject_noise = val
+            if key == 'process_noise':
+                Q = val
+                Q_flag = 1
+            if key == 'measurement_noise':
+                R = val
+                R_flag = 1
             
-        if isinstance(inserted_system, tuple):
+        if isinstance(inserted_system, (tuple, list)):
             self.system = Structure()
             self.system.A = inserted_system[0]
             self.system.B = inserted_system[1]
@@ -95,12 +116,16 @@ class LtiGroup():
         self.inputs = np.zeros([self.n_inputs , self.number_ltis, self.delay + 1])
         self.outputs = np.zeros([self.n_outputs, self.number_ltis])
         self.states = np.zeros([self.n_states, self.number_ltis])
+        self.Q = Q if Q_flag == 1 else np.zeros((self.n_states, self.n_states))
+        self.R = R if R_flag == 1 else np.zeros((self.n_outputs, self.n_outputs))
+        self.Q_ch = np.linalg.cholesky(self.Q) if self.Q.any() != 0 else self.Q
+        self.R_ch = np.linalg.cholesky(self.R) if self.R.any() != 0 else self.R
         
         # If the initial input does not exist, set it to zero.
         # Otherwise, put the initial condition in the state matrix.
         initial_condition = np.array(initial_condition)
         inish = initial_condition.shape
-        if sum(inish) == self.n_states or sum(inish) == self.n_states + 1:
+        if sum(inish) == self.n_states or sum(inish) == self.n_states + 1 or inish == ():
             # If the imported initial value is not a column vector, reshape it.
             initial_condition = np.reshape(initial_condition, (-1, 1))
             self.states += 1
@@ -112,6 +137,8 @@ class LtiGroup():
                 err_text = "The dimensions of the inserted initial value are incorrect. Please check it."
                 logging.error(err_text)
                 raise ValueError(err_text)
+        # Getting a backup of initial values
+        self.backup = cop.copy(self.__dict__)
         # Comment and diary
         Clib.diary(f'{self.name} has been created.')
 
@@ -125,13 +152,15 @@ class LtiGroup():
         ss_form += Clib.latex_matrix(self.A, (6,6))
         ss_form += r'x_{k' + ('-1' if self.newest == True else '') + '} + '
         ss_form += Clib.latex_matrix(self.B, (6,6))
-        ss_form += r'u_{k' + ('-1' if self.newest == True else '') + '} \\nonumber \\\\ '
+        ss_form += r'u_k \nonumber \\ '
         ss_form += r'y_k & = ' + Clib.latex_matrix(self.C, (6,6))
         ss_form += r'x_{k} + ' + Clib.latex_matrix(self.D, (6,6)) + r'u_{k} \nonumber'
         ss_form += r'\end{align}'
         
         properties  = r'\begin{aligned}'
         properties += r'&\text{System poles: } &&= ' + Clib.latex_matrix(np.linalg.eig(self.A)[0].reshape((1,-1))) + ' \\\\ '
+        properties += r'&\text{Process noise variance: } &&= ' + Clib.latex_matrix(self.Q) + ' \\\\ '
+        properties += r'&\text{Measurement noise variance: } &&= ' + Clib.latex_matrix(self.R) + ' \\\\ '
         properties += r'\end{aligned}'
         
         table_c  = r'\begin{aligned}'
@@ -168,21 +197,64 @@ class LtiGroup():
         '''
         # Shifts the input signal to create a delayed input signal
         self.inputs = np.roll(self.inputs, -1, axis=2)
-        self.inputs[:,:,-1] = input_signal
+        self.inputs[:,:,-1] = np.array(input_signal).reshape((self.n_inputs, self.number_ltis))
         
         # Updates the states using the state-space equation dx = Ax + Bu
         x = np.dot(self.A, self.states) + np.dot(self.B, self.inputs[:,:,0])
+        # Auto injecting noise
+        if self.auto_inject_noise == True and self.Q.any() != 0:
+            x_noise = self.Q_ch @ np.random.randn(self.n_states, 1)
+        x += x_noise
         
         # Calculates the outputs using the state-space equation y = Cx + Du
         y = np.dot(self.C, x if self.newest == 1 else self.states) + np.dot(self.D, self.inputs[:,:,0])
+        # Auto injecting noise
+        if self.auto_inject_noise == True and self.R.any() != 0:
+            y_noise = self.R_ch @ np.random.randn(self.n_outputs, 1)
+        y += y_noise
         
         # Updates internal signals
-        self.states = x + x_noise
-        self.outputs = y + y_noise
+        self.states = x
+        self.outputs = y
+        
+    def reset(self):
+        '''
+        ### Overview:
+        Reseting the block.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        # Reset all variables to their initial values
+        temp_1 = self.backup
+        self.__dict__.clear()
+        self.__dict__.update(temp_1)
+        self.backup = cop.copy(self.__dict__)
+        
+    @classmethod
+    def reset_all(cls):
+        '''
+        ### Overview:
+        Reseting all objects.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        for obj in cls.all_objects:
+            # Reset all variables to their initial values
+            temp_1 = obj.backup
+            obj.__dict__.clear()
+            obj.__dict__.update(temp_1)
+            obj.backup = cop.copy(obj.__dict__)
 # End of class
 
 # Linear Kalman Filter
 class LinearKalmanFilter():
+    # All objects
+    all_objects = []
+    # Initialization
     def __init__(self, inserted_system, **kwargs):
         '''
         ### Overview:
@@ -197,13 +269,16 @@ class LinearKalmanFilter():
         * `name`: Defines a name for the object
         * `x_0`: Specifies the initial state
         * `P_0`: Denotes the initial covariance
-        * `process_noise`: Sets the process noise covariacne `Q`
-        * `measurement_noise`: Defines the measurement noise covariance `R`
+        * `process_noise`: Sets the process noise variance `Q`
+        * `measurement_noise`: Defines the measurement noise variance `R`
         
         ### Copyright:
         Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
         Web page: https://github.com/abolfazldelavar/dyrun
         '''
+        # Adding the current object to the list
+        LinearKalmanFilter.all_objects.append(self)
+        # Initial variables
         self.inserted_system = inserted_system
         initial_condition = [0]
         initial_cov = [0]
@@ -223,11 +298,15 @@ class LinearKalmanFilter():
             self.system.B = inserted_system[1]
             self.system.C = inserted_system[2]
             self.system.D = inserted_system[3]
+            self.Q = np.eye(self.system.A.shape[0], self.system.A.shape[0])*1e-4
+            self.R = np.eye(self.system.C.shape[0], self.system.C.shape[0])*1e-4
         else:
             self.system.A = inserted_system.A
             self.system.B = inserted_system.B
             self.system.C = inserted_system.C
             self.system.D = inserted_system.D
+            self.Q = inserted_system.Q # Process noise covariance
+            self.R = inserted_system.R # Measurement noise covariance
             
         if np.array(self.system.D).all() == 0:
             self.system.D = np.zeros((np.size(self.system.C, 0), np.size(self.system.B, 1)))
@@ -246,8 +325,6 @@ class LinearKalmanFilter():
         self.K = np.zeros([self.n_states, self.n_outputs]) # Kalman Gain
         self.P_pr = np.eye(self.n_states, self.n_states) # Priori covariance
         self.P_ps = np.eye(self.n_states, self.n_states)*1e3 # Posteriori covariance
-        self.Q = np.eye(self.n_states, self.n_states)*1e-4 # Process noise covariance
-        self.R = np.eye(self.n_outputs, self.n_outputs)*1e-4 # Measurement noise covariance
         
         # Adjusting the initial condition
         initial_condition = np.array(initial_condition).ravel()
@@ -265,6 +342,8 @@ class LinearKalmanFilter():
         R = np.array(R)
         if sum(R.shape) == 2*self.n_outputs:
             self.R = R
+        # Getting a backup of initial values
+        self.backup = cop.copy(self.__dict__)
         # Comment and diary
         Clib.diary(f'{self.name} has been created.')
         
@@ -278,14 +357,15 @@ class LinearKalmanFilter():
         table_c += f'&B &&= {Clib.latex_matrix(self.B, (6,6))} \\\\ '
         table_c += f'&C &&= {Clib.latex_matrix(self.C, (6,6))} \\\\ '
         table_c += f'&D &&= {Clib.latex_matrix(self.D, (6,6))} \\\\ '
+        table_c += f'&Q &&= {Clib.latex_matrix(self.Q)} \\\\ '
+        table_c += f'&R &&= {Clib.latex_matrix(self.R)} \\\\ '
         table_c += f'&x\_pr &&= {Clib.latex_matrix(self.x_pr)} \\\\ '
         table_c += f'&x\_ps &&= {Clib.latex_matrix(self.x_ps)} \\\\ '
         table_c += f'&res &&= {Clib.latex_matrix(self.res)} \\\\ '
         table_c += f'&K &&= {Clib.latex_matrix(self.K)} \\\\ '
         table_c += f'&P\_pr &&= {Clib.latex_matrix(self.P_pr)} \\\\ '
-        table_c += f'&P\_ps &&= {Clib.latex_matrix(self.P_ps)} \\\\ '
-        table_c += f'&Q &&= {Clib.latex_matrix(self.Q)} \\\\ '
-        table_c += f'&R &&= {Clib.latex_matrix(self.R)} '
+        table_c += f'&P\_ps &&= {Clib.latex_matrix(self.P_ps)} '
+
         table_c += r'\end{aligned}'
         
         text  = f"### {self.name}\n\n "
@@ -320,11 +400,65 @@ class LinearKalmanFilter():
         self.x_ps = self.x_pr + np.dot(self.K, self.res)
         self.P_ps = (np.eye(self.n_states) - self.K @ self.C) @ self.P_pr
     
+    def ss(self):
+        '''
+        ### Overview:
+        Returning steady-state matrices such as error variance, residue variance, and Kalman gain.
+
+        ### Output variables:
+        * `P_pr_ss`: Steady-state priori variance
+        * `z_sigma`: Steady-state residue variance
+        * `K`: Steady-state Kalman gain
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        P_pr_ss = scipy.linalg.solve_discrete_are(self.A, self.C.T, self.Q, self.R)
+        z_sigma = self.C @ P_pr_ss @ self.C.T + self.R
+        z_sigma_inv = np.linalg.inv(z_sigma)
+        K = P_pr_ss @ self.C.T @ z_sigma_inv
+        return (P_pr_ss, z_sigma, K)
+    
+    def reset(self):
+        '''
+        ### Overview:
+        Reseting the block.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        # Reset all variables to their initial values
+        temp_1 = self.backup
+        self.__dict__.clear()
+        self.__dict__.update(temp_1)
+        self.backup = cop.copy(self.__dict__)
+        
+    @classmethod
+    def reset_all(cls):
+        '''
+        ### Overview:
+        Reseting all objects.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        for obj in cls.all_objects:
+            # Reset all variables to their initial values
+            temp_1 = obj.backup
+            obj.__dict__.clear()
+            obj.__dict__.update(temp_1)
+            obj.backup = cop.copy(obj.__dict__)
     
 # End of class
 
 # Nonlinear dynamic group
 class NonlinearGroup(SolverCore):
+    # All objects
+    all_objects = []
+    # Initialization
     def __init__(self, sample_time, **kwargs):
         '''
         ### Overview:
@@ -348,6 +482,9 @@ class NonlinearGroup(SolverCore):
         Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
         Web page: https://github.com/abolfazldelavar/dyrun
         '''
+        # Adding the current object to the list
+        NonlinearGroup.all_objects.append(self)
+        # Initial variables
         initial_condition = [0]
         time_delay = 0
         self.enable_synapses = False
@@ -399,6 +536,8 @@ class NonlinearGroup(SolverCore):
                 err_text = "The dimensions of the inserted initial value are incorrect. Please check it."
                 logging.error(err_text)
                 raise ValueError(err_text)
+        # Getting a backup of initial values
+        self.backup = cop.copy(self.__dict__)
         # Comment & diary
         Clib.diary('"' + self.name + '" has been created.')
     
@@ -463,6 +602,37 @@ class NonlinearGroup(SolverCore):
         self.outputs = y + y_noise
     # End of function
 
+    def reset(self):
+        '''
+        ### Overview:
+        Reseting the block.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        # Reset all variables to their initial values
+        temp_1 = self.backup
+        self.__dict__.clear()
+        self.__dict__.update(temp_1)
+        self.backup = cop.copy(self.__dict__)
+        
+    @classmethod
+    def reset_all(cls):
+        '''
+        ### Overview:
+        Reseting all objects.
+        
+        ### Copyright:
+        Copyright (c) 2023, Abolfazl Delavar, all rights reserved.
+        Web page: https://github.com/abolfazldelavar/dyrun
+        '''
+        for obj in cls.all_objects:
+            # Reset all variables to their initial values
+            temp_1 = obj.backup
+            obj.__dict__.clear()
+            obj.__dict__.update(temp_1)
+            obj.backup = cop.copy(obj.__dict__)
 # End of class
 
 

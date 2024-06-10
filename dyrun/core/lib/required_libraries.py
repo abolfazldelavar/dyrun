@@ -7,6 +7,8 @@
 
 # %%
 import numpy as np
+from numpy.linalg import *
+from numpy.random import *
 
 # %% [markdown]
 # ## matplotlib
